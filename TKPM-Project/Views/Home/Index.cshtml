@@ -1,0 +1,49 @@
+﻿@model List<TKPM_Project.Models.Tools.ITool>
+@using System.Linq
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome to IT Tools</h1>
+    <p>Upload a .dll file to add a new tool!</p>
+
+    <form asp-action="ImportTool" method="post" enctype="multipart/form-data">
+        <input type="file" name="dllFile" accept=".dll" />
+        <button type="submit">Import Tool</button>
+    </form>
+
+    <h2>Available Tools</h2>
+    @if (Model != null && Model.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Premium</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var tool in Model)
+                {
+                    <tr>
+                        <td>@tool.Name</td>
+                        <td>@tool.Description</td>
+                        <td>@tool.Category</td>
+                        <td>@tool.IsPremium</td>
+                        <td>
+                            <a asp-controller="Tool" asp-action="Detail" asp-route-toolName="@tool.Name" class="btn btn-primary btn-sm">View Details</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No tools available yet.</p>
+    }
+</div>

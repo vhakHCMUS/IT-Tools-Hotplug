@@ -1,0 +1,47 @@
+﻿@model TKPM_Project.Models.Tools.ITool
+
+@{
+    ViewData["Title"] = $"{Model.Name} - Tool Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="text-center">
+    <h1 class="display-4">@Model.Name</h1>
+    <p><strong>Description:</strong> @Model.Description</p>
+    <p><strong>Category:</strong> @Model.Category</p>
+    <p><strong>Premium:</strong> @Model.IsPremium</p>
+
+    <h3>Use This Tool</h3>
+    @if (ViewBag.CustomViewTemplate != null)
+    {
+        @Html.Raw(ViewBag.CustomViewTemplate)
+    }
+    else
+    {
+        <form asp-action="Execute" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="toolName" value="@Model.Name" />
+            <div class="form-group">
+                <label for="inputs">Inputs (comma-separated):</label>
+                <input type="text" name="inputs" class="form-control" placeholder="Enter inputs (e.g., input1, input2)" value="@ViewBag.Inputs" />
+            </div>
+            <button type="submit" class="btn btn-primary mt-2">Execute</button>
+        </form>
+    }
+
+    @if (ViewBag.Result != null)
+    {
+        <div class="alert alert-success mt-3">
+            <strong>Result:</strong> @ViewBag.Result
+        </div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger mt-3">
+            <strong>Error:</strong> @ViewBag.Error
+        </div>
+    }
+
+    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary mt-3">Back to List</a>
+</div>
