@@ -8,46 +8,61 @@
     <h1 class="display-4">Welcome to IT Tools</h1>
     <p>Upload a .dll file to add a new tool!</p>
 
-    <form asp-action="ImportTool" method="post" enctype="multipart/form-data">
-        <input type="file" name="dllFile" accept=".dll" />
-        <button type="submit">Import Tool</button>
+    <form asp-action="ImportTool" method="post" enctype="multipart/form-data" class="mb-4">
+        <input type="file" name="dllFile" accept=".dll" class="form-control d-inline-block w-auto" />
+        <button type="submit" class="btn btn-primary">Import Tool</button>
     </form>
 
     <h2>Available Tools</h2>
     @if (Model != null && Model.Any())
     {
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Category</th>
-                    <th>Premium</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var tool in Model)
-                {
-                    <tr>
-                        <td>@tool.Name</td>
-                        <td>@tool.Description</td>
-                        <td>@tool.Category</td>
-                        <td>@tool.IsPremium</td>
-                        <td>
-                            <a asp-controller="Tool" asp-action="Detail" asp-route-toolName="@tool.Name" class="btn btn-primary btn-sm">View Details</a>
-                            <form asp-action="DeleteTool" method="post" style="display:inline;">
-                                <input type="hidden" name="toolName" value="@tool.Name" />
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete @tool.Name?');">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            @foreach (var tool in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">@tool.Name</h5>
+                                <a href="#" class="text-muted"><i class="bi bi-heart"></i></a>
+                            </div>
+                            <p class="card-text text-muted small mt-2">@tool.Description</p>
+                            <p class="card-text text-muted small">
+                                <strong>Category:</strong> @tool.Category<br />
+                                <strong>Premium:</strong> @(tool.IsPremium ? "Yes" : "No")
+                            </p>
+                            <div class="d-flex justify-content-between">
+                                <a asp-controller="Tool" asp-action="Detail" asp-route-toolName="@tool.Name" class="btn btn-primary btn-sm">View Details</a>
+                                <form asp-action="DeleteTool" method="post" style="display:inline;">
+                                    <input type="hidden" name="toolName" value="@tool.Name" />
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete @tool.Name?');">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
     }
     else
     {
         <p>No tools available yet.</p>
     }
 </div>
+
+@section Scripts {
+    <style>
+        .card {
+            transition: transform 0.2s;
+        }
+
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+
+        .bi-heart:hover {
+            color: #ff4d4f !important;
+        }
+    </style>
+}

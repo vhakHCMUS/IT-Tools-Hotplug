@@ -21,6 +21,7 @@ public class HomeController : Controller
     public IActionResult Index()
     {
         var tools = _toolService.GetTools();
+        ViewData["Tools"] = tools; // Pass tools to ViewData for the layout
         return View(tools);
     }
 
@@ -42,6 +43,8 @@ public class HomeController : Controller
         {
             _logger.LogWarning("Invalid file uploaded. Only .dll files are allowed.");
         }
+        var tools = _toolService.GetTools();
+        ViewData["Tools"] = tools; // Update ViewData after importing a new tool
         return RedirectToAction("Index");
     }
 
@@ -50,7 +53,6 @@ public class HomeController : Controller
     {
         try
         {
-            // Find the tool to delete
             var tool = _toolService.GetToolByName(toolName);
             if (tool == null)
             {
@@ -58,41 +60,26 @@ public class HomeController : Controller
                 return RedirectToAction("Index");
             }
 
-            // Get the .dll file name from ToolService
-            var dllFileName = _toolService.GetDllFileName(toolName);
-            if (string.IsNullOrEmpty(dllFileName))
-            {
-                _logger.LogWarning($"No .dll file name found for tool {toolName}.");
-                return RedirectToAction("Index");
-            }
-
-            // Construct the full file path
-            _logger.LogInformation($"Current directory: {Directory.GetCurrentDirectory()}");
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Plugins", dllFileName);
-            _logger.LogInformation($"Attempting to delete .dll file at: {filePath}");
-
-            // Check if the file exists
-            if (!System.IO.File.Exists(filePath))
-            {
-                _logger.LogWarning($"File {dllFileName} does not exist at {filePath} for tool {toolName}.");
-                // Still unload the tool even if the file isn't found
-                _toolService.UnloadTool(toolName);
-                return RedirectToAction("Index");
-            }
-
-            // Unload the tool first
             _toolService.UnloadTool(toolName);
             _logger.LogInformation($"Unloaded tool {toolName} from memory.");
 
-            // Force garbage collection
             GC.Collect();
             GC.WaitForPendingFinalizers();
             _logger.LogInformation("Garbage collection completed.");
 
-            // Delete the file (should work now since the file is not locked)
-            System.IO.File.Delete(filePath);
-            _logger.LogInformation($"Successfully deleted .dll file for tool {toolName} at {filePath}");
+            var dllFileName = _toolService.GetDllFileName(toolName);
+            if (!string.IsNullOrEmpty(dllFileName))
+            {
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Plugins", dllFileName);
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                    _logger.LogInformation($"Successfully deleted .dll file for tool {toolName} at {filePath}");
+                }
+            }
 
+            var tools = _toolService.GetTools();
+            ViewData["Tools"] = tools; // Update ViewData after deleting a tool
             return RedirectToAction("Index");
         }
         catch (Exception ex)
@@ -101,14 +88,19 @@ public class HomeController : Controller
             return RedirectToAction("Index");
         }
     }
+
     public IActionResult Privacy()
     {
+        var tools = _toolService.GetTools();
+        ViewData["Tools"] = tools; // Pass tools to ViewData for the Privacy page
         return View();
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
+        var tools = _toolService.GetTools();
+        ViewData["Tools"] = tools; // Pass tools to ViewData for the Error page
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

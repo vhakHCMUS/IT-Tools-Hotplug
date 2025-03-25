@@ -65,10 +65,16 @@ public class ToolController : Controller
         ViewBag.Inputs = inputs; // Giữ lại inputs để hiển thị trong form
         return View("Detail", tool);
     }
-
+    public class ToolExecutionInput
+    {
+        public string[] Inputs { get; set; } // Current string array input
+                                             // Add more properties in the future as needed, e.g.:
+                                             // public int SomeNumber { get; set; }
+                                             // public Dictionary<string, string> AdditionalData { get; set; }
+    }
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Execute(string toolName, string inputs)
+    public async Task<IActionResult> Execute(string toolName, ToolExecutionInput input)
     {
         if (!ModelState.IsValid)
         {
@@ -76,7 +82,7 @@ public class ToolController : Controller
             return BadRequest(ModelState);
         }
 
-        _logger.LogInformation($"POST request to Execute with toolName: {toolName}, inputs: {inputs ?? "none"}");
+        _logger.LogInformation($"POST request to Execute with toolName: {toolName}, inputs: {(input.Inputs != null ? string.Join(", ", input.Inputs) : "none")}");
         var tool = _toolService.GetToolByName(toolName);
         if (tool == null)
         {
@@ -86,11 +92,7 @@ public class ToolController : Controller
 
         try
         {
-            // Tách chuỗi inputs thành mảng
-            object[] inputArray = string.IsNullOrEmpty(inputs)
-                ? new object[0]
-                : inputs.Split(',').Select(i => i.Trim() as object).ToArray();
-
+            object[] inputArray = input.Inputs?.Select(i => i as object).ToArray() ?? new object[0];
             var result = await tool.ExecuteAsync(inputArray);
             _logger.LogInformation($"ExecuteAsync result: {result?.ToString() ?? "null"}");
             ViewBag.Result = result?.ToString() ?? "No result returned.";
@@ -105,7 +107,7 @@ public class ToolController : Controller
         {
             ViewBag.CustomViewTemplate = tool.CustomViewTemplate;
         }
-        ViewBag.Inputs = inputs;
+        ViewBag.Inputs = input.Inputs != null ? string.Join(",", input.Inputs) : null;
         return View("Detail", tool);
     }
 }
