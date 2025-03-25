@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 using Microsoft.AspNetCore.Mvc;
 using TKPM_Project.Models;
-using TKPM_Project.Services; // Thêm dòng này để import namespace của ToolService
+using TKPM_Project.Services;
 
 namespace TKPM_Project.Controllers;
 
@@ -36,7 +36,7 @@ public class HomeController : Controller
                 await dllFile.CopyToAsync(stream);
             }
             _toolService.LoadToolFromDll(filePath);
-            _logger.LogInformation($"Imported tool from {dllFile.FileName}");
+            _logger.LogInformation($"Imported tool from {dllFile.FileName} at {filePath}");
         }
         else
         {
@@ -45,6 +45,62 @@ public class HomeController : Controller
         return RedirectToAction("Index");
     }
 
+    [HttpPost]
+    public IActionResult DeleteTool(string toolName)
+    {
+        try
+        {
+            // Find the tool to delete
+            var tool = _toolService.GetToolByName(toolName);
+            if (tool == null)
+            {
+                _logger.LogWarning($"Tool {toolName} not found.");
+                return RedirectToAction("Index");
+            }
+
+            // Get the .dll file name from ToolService
+            var dllFileName = _toolService.GetDllFileName(toolName);
+            if (string.IsNullOrEmpty(dllFileName))
+            {
+                _logger.LogWarning($"No .dll file name found for tool {toolName}.");
+                return RedirectToAction("Index");
+            }
+
+            // Construct the full file path
+            _logger.LogInformation($"Current directory: {Directory.GetCurrentDirectory()}");
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Plugins", dllFileName);
+            _logger.LogInformation($"Attempting to delete .dll file at: {filePath}");
+
+            // Check if the file exists
+            if (!System.IO.File.Exists(filePath))
+            {
+                _logger.LogWarning($"File {dllFileName} does not exist at {filePath} for tool {toolName}.");
+                // Still unload the tool even if the file isn't found
+                _toolService.UnloadTool(toolName);
+                return RedirectToAction("Index");
+            }
+
+            // Unload the tool first
+            _toolService.UnloadTool(toolName);
+            _logger.LogInformation($"Unloaded tool {toolName} from memory.");
+
+            // Force garbage collection
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            _logger.LogInformation("Garbage collection completed.");
+
+            // Delete the file (should work now since the file is not locked)
+            System.IO.File.Delete(filePath);
+            _logger.LogInformation($"Successfully deleted .dll file for tool {toolName} at {filePath}");
+
+            return RedirectToAction("Index");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error deleting tool {toolName}");
+            return RedirectToAction("Index");
+        }
+    }
     public IActionResult Privacy()
     {
         return View();

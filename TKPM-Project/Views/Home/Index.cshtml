@@ -36,6 +36,10 @@
                         <td>@tool.IsPremium</td>
                         <td>
                             <a asp-controller="Tool" asp-action="Detail" asp-route-toolName="@tool.Name" class="btn btn-primary btn-sm">View Details</a>
+                            <form asp-action="DeleteTool" method="post" style="display:inline;">
+                                <input type="hidden" name="toolName" value="@tool.Name" />
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete @tool.Name?');">Delete</button>
+                            </form>
                         </td>
                     </tr>
                 }

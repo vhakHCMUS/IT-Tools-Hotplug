@@ -1,13 +1,12 @@
 ﻿using System.Runtime.Loader;
 using TKPM_Project.Models.Tools;
 using System.Reflection;
-using System.Runtime.Loader;
 
 namespace TKPM_Project.Services
 {
     public class ToolService
     {
-        private readonly Dictionary<string, ITool> _tools = new();
+        private readonly Dictionary<string, (ITool Tool, string DllFileName)> _tools = new();
         private readonly Dictionary<string, CustomAssemblyLoadContext> _contexts = new();
         private readonly string _pluginPath = Path.Combine(Directory.GetCurrentDirectory(), "Plugins");
 
@@ -29,19 +28,26 @@ namespace TKPM_Project.Services
         // Tải công cụ từ file .dll
         public void LoadToolFromDll(string dllPath)
         {
-            var context = new CustomAssemblyLoadContext();
-            var assembly = context.LoadFromAssemblyPath(dllPath);
-
-            var toolType = assembly.GetTypes()
-                .FirstOrDefault(t => typeof(ITool).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
-
-            if (toolType != null)
+            // Read the .dll file into memory to avoid locking the file on disk
+            byte[] dllBytes = System.IO.File.ReadAllBytes(dllPath);
+            using (var stream = new MemoryStream(dllBytes))
             {
-                var tool = Activator.CreateInstance(toolType) as ITool;
-                if (tool != null)
+                var context = new CustomAssemblyLoadContext();
+                var assembly = context.LoadFromStream(stream);
+
+                var toolType = assembly.GetTypes()
+                    .FirstOrDefault(t => typeof(ITool).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+
+                if (toolType != null)
                 {
-                    _tools[tool.Name] = tool;
-                    _contexts[tool.Name] = context;
+                    var tool = Activator.CreateInstance(toolType) as ITool;
+                    if (tool != null)
+                    {
+                        var dllFileName = Path.GetFileName(dllPath);
+                        _tools[tool.Name] = (tool, dllFileName);
+                        _contexts[tool.Name] = context;
+                        Console.WriteLine($"Loaded tool {tool.Name} from {dllPath}");
+                    }
                 }
             }
         }
@@ -49,9 +55,9 @@ namespace TKPM_Project.Services
         // Xóa công cụ
         public void UnloadTool(string toolName)
         {
-            if (_tools.TryGetValue(toolName, out var tool))
+            if (_tools.TryGetValue(toolName, out var toolInfo))
             {
-                tool.Dispose(); // Gọi Dispose để giải phóng tài nguyên
+                toolInfo.Tool.Dispose(); // Gọi Dispose để giải phóng tài nguyên
                 _tools.Remove(toolName);
 
                 if (_contexts.TryGetValue(toolName, out var context))
@@ -62,8 +68,9 @@ namespace TKPM_Project.Services
             }
         }
 
-        public List<ITool> GetTools() => _tools.Values.ToList();
-        public ITool GetToolByName(string name) => _tools.GetValueOrDefault(name);
+        public List<ITool> GetTools() => _tools.Values.Select(t => t.Tool).ToList();
+        public ITool GetToolByName(string name) => _tools.TryGetValue(name, out var toolInfo) ? toolInfo.Tool : null;
+        public string GetDllFileName(string toolName) => _tools.TryGetValue(toolName, out var toolInfo) ? toolInfo.DllFileName : null;
     }
 
     // Custom AssemblyLoadContext để hỗ trợ unload
