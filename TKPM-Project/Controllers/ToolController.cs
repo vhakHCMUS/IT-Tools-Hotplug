@@ -15,7 +15,6 @@ public class ToolController : Controller
         _logger = logger;
     }
 
-    // Hỗ trợ cả GET và POST
     [AcceptVerbs("GET", "POST")]
     public async Task<IActionResult> Detail(string toolName, string inputs = null)
     {
@@ -28,30 +27,53 @@ public class ToolController : Controller
             return NotFound();
         }
 
-        // Xử lý POST request để thực thi công cụ
+        // Handle POST request to execute tool
         if (Request.Method == "POST" && !string.IsNullOrEmpty(inputs))
         {
-            if (!ModelState.IsValid)
-            {
-                _logger.LogWarning("Model state invalid: {Errors}", string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                object[] inputArray = inputs.Split(',').Select(i => i.Trim() as object).ToArray();
-                var result = await tool.ExecuteAsync(inputArray);
-                _logger.LogInformation($"ExecuteAsync result: {result?.ToString() ?? "null"}");
-                ViewBag.Result = result?.ToString() ?? "No result returned.";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error executing tool {toolName}: {ex.Message}");
-                ViewBag.Error = $"Error executing tool: {ex.Message}";
-            }
+            await ExecuteToolWithLogging(tool, inputs);
         }
 
-        // Thiết lập template tùy chỉnh (cho cả GET và POST)
+        // Set up custom view template
+        SetupCustomViewTemplate(tool, toolName);
+
+        ViewBag.Inputs = inputs; // Retain inputs for form display
+        return View("Detail", tool);
+    }
+
+    private async Task ExecuteToolWithLogging(ITool tool, string inputs)
+    {
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("Model state invalid: {Errors}",
+                string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+            ViewBag.Error = "Invalid input model state.";
+            return;
+        }
+
+        try
+        {
+            // Convert input string to object array
+            object[] inputArray = inputs.Split(',')
+                .Select(i => i.Trim() as object)
+                .ToArray();
+
+            // Execute the tool
+            var result = await tool.ExecuteAsync(inputArray);
+
+            // Log and store the result
+            _logger.LogInformation($"ExecuteAsync result: {result?.ToString() ?? "null"}");
+            ViewBag.Result = result?.ToString() ?? "No result returned.";
+        }
+        catch (Exception ex)
+        {
+            // Log and store any execution errors
+            _logger.LogError($"Error executing tool {tool.Name}: {ex.Message}");
+            ViewBag.Error = $"Error executing tool: {ex.Message}";
+        }
+    }
+
+    private void SetupCustomViewTemplate(ITool tool, string toolName)
+    {
         if (!string.IsNullOrEmpty(tool.CustomViewTemplate))
         {
             _logger.LogInformation($"Custom view template found for {toolName}");
@@ -61,53 +83,12 @@ public class ToolController : Controller
         {
             _logger.LogInformation($"No custom view template for {toolName}, using default view");
         }
-
-        ViewBag.Inputs = inputs; // Giữ lại inputs để hiển thị trong form
-        return View("Detail", tool);
     }
+
+    // Optional input model for future extensibility
     public class ToolExecutionInput
     {
-        public string[] Inputs { get; set; } // Current string array input
-                                             // Add more properties in the future as needed, e.g.:
-                                             // public int SomeNumber { get; set; }
-                                             // public Dictionary<string, string> AdditionalData { get; set; }
-    }
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Execute(string toolName, ToolExecutionInput input)
-    {
-        if (!ModelState.IsValid)
-        {
-            _logger.LogWarning("Model state invalid: {Errors}", string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
-            return BadRequest(ModelState);
-        }
-
-        _logger.LogInformation($"POST request to Execute with toolName: {toolName}, inputs: {(input.Inputs != null ? string.Join(", ", input.Inputs) : "none")}");
-        var tool = _toolService.GetToolByName(toolName);
-        if (tool == null)
-        {
-            _logger.LogWarning($"Tool not found: {toolName}");
-            return NotFound();
-        }
-
-        try
-        {
-            object[] inputArray = input.Inputs?.Select(i => i as object).ToArray() ?? new object[0];
-            var result = await tool.ExecuteAsync(inputArray);
-            _logger.LogInformation($"ExecuteAsync result: {result?.ToString() ?? "null"}");
-            ViewBag.Result = result?.ToString() ?? "No result returned.";
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error executing tool {toolName}: {ex.Message}");
-            ViewBag.Error = $"Error executing tool: {ex.Message}";
-        }
-
-        if (!string.IsNullOrEmpty(tool.CustomViewTemplate))
-        {
-            ViewBag.CustomViewTemplate = tool.CustomViewTemplate;
-        }
-        ViewBag.Inputs = input.Inputs != null ? string.Join(",", input.Inputs) : null;
-        return View("Detail", tool);
+        public string[] Inputs { get; set; }
+        // You can add more properties here for future input handling
     }
 }
