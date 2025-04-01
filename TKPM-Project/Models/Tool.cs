@@ -14,6 +14,6 @@ public class Tool : ITool
         return await Task.FromResult(new { Message = "Execution completed" });
     }
 
-    public string CustomViewTemplate { get; set; }
+    public string CustomViewTemplate { get; set; } = "defaultTemplate";
     public void Dispose() { }
 }
