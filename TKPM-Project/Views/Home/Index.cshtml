@@ -8,6 +8,36 @@
     <h1 class="display-4">Welcome to IT Tools</h1>
     <p>Upload a .dll file to add a new tool!</p>
 
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div class="mb-3">
+            <span>Welcome, @User.Identity.Name!</span>
+            <form id="logoutForm">
+                <button type="button" class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+            </form>
+            <script>
+                async function logout() {
+                    const response = await fetch('/api/auth/logout', { method: 'POST' });
+                    if (response.ok) {
+                        alert("Logged out successfully");
+                        window.location.href = "/";
+                    } else {
+                        alert("Logout failed");
+                    }
+                }
+            </script>
+        </div>
+    }
+    else
+    {
+        <div class="mb-3">
+            <a href="/Account/Login" class="btn btn-outline-primary me-2">Login</a>
+            <a href="/Account/Register" class="btn btn-primary">Sign Up he</a>
+        </div>
+    }
+
+
+
     <form asp-action="ImportTool" method="post" enctype="multipart/form-data" class="mb-4">
         <input type="file" name="dllFile" accept=".dll" class="form-control d-inline-block w-auto" />
         <button type="submit" class="btn btn-primary">Import Tool</button>
