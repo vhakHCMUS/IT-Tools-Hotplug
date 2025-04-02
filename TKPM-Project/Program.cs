@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using TKPM_Project.Models; // Đảm bảo bạn đang sử dụng ApplicationUser
+using TKPM_Project.Models;
 using TKPM_Project.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
-
 var builder = WebApplication.CreateBuilder(args);
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<ToolService>();
@@ -16,7 +16,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Đăng ký Authentication & Authorization
-
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -25,7 +24,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.HttpOnly = true;
         options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
         options.SlidingExpiration = true;
-    }); 
+    });
 builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
@@ -44,8 +43,6 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
-
-
 // Đăng ký Repository
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IToolRepository, ToolRepository>();
@@ -59,14 +56,12 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
-
 
 app.MapControllerRoute(
     name: "default",
@@ -76,6 +71,8 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
+    var toolService = services.GetRequiredService<ToolService>();
+    var toolRepository = services.GetRequiredService<IToolRepository>();
 
     // Đảm bảo database đã tồn tại (tạo nếu chưa có)
     context.Database.Migrate();
@@ -89,7 +86,33 @@ using (var scope = app.Services.CreateScope())
         );
         context.SaveChanges();
     }
-}
 
+    // Load tools from plugins and save their metadata to the database
+    var loadedTools = toolService.GetTools(); // Get all tools loaded by ToolService
+    foreach (var tool in loadedTools)
+    {
+        // Check if the tool already exists in the database
+        var existingTool = await toolRepository.GetByKeywordAsync(tool.Name)
+            .ContinueWith(t => t.Result.FirstOrDefault(t => t.Name == tool.Name));
+
+        if (existingTool == null)
+        {
+            // Create a new Tool entity with the metadata from the loaded tool
+            var newTool = new Tool
+            {
+                Name = tool.Name,
+                Description = tool.Description,
+                IsPremium = tool.IsPremium,
+                Category = tool.Category,
+                IsAvailable = true, // Default value, adjust as needed
+                CreatedAt = DateTime.UtcNow,
+                CustomViewTemplate = tool.CustomViewTemplate ?? "defaultTemplate"
+            };
+
+            // Add the tool to the database
+            await toolRepository.AddAsync(newTool);
+        }
+    }
+}
 
 app.Run();
