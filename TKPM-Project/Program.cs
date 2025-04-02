@@ -89,6 +89,21 @@ using (var scope = app.Services.CreateScope())
 
     // Load tools from plugins and save their metadata to the database
     var loadedTools = toolService.GetTools(); // Get all tools loaded by ToolService
+
+    // Get all tools from the database
+    var dbTools = await toolRepository.GetAllAsync();
+
+    // Check for tools in the database that don't exist in loadedTools and delete them
+    foreach (var dbTool in dbTools)
+    {
+        if (!loadedTools.Any(lt => lt.Name == dbTool.Name))
+        {
+            // Tool exists in database but not in loaded tools, delete it
+            await toolRepository.DeleteAsync(dbTool.Id);
+        }
+    }
+
+    // Add new tools from plugins to the database if they don't already exist
     foreach (var tool in loadedTools)
     {
         // Check if the tool already exists in the database

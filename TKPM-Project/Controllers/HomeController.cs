@@ -10,18 +10,20 @@ namespace TKPM_Project.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
-    private readonly ToolService _toolService;
+    private readonly ToolService _toolService; // For DLL import and delete
+    private readonly IToolRepository _toolRepository; // For loading tool list from DB
 
-    public HomeController(ILogger<HomeController> logger, ToolService toolService)
+    public HomeController(ILogger<HomeController> logger, ToolService toolService, IToolRepository toolRepository)
     {
         _logger = logger;
         _toolService = toolService;
+        _toolRepository = toolRepository;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        var tools = _toolService.GetTools();
-        ViewData["Tools"] = tools; // Pass tools to ViewData for the layout
+        var tools = await _toolRepository.GetAllAsync(); // Load tools from database
+        ViewData["Tools"] = tools;
         return View(tools);
     }
 
@@ -43,13 +45,13 @@ public class HomeController : Controller
         {
             _logger.LogWarning("Invalid file uploaded. Only .dll files are allowed.");
         }
-        var tools = _toolService.GetTools();
-        ViewData["Tools"] = tools; // Update ViewData after importing a new tool
+        var tools = await _toolRepository.GetAllAsync(); // Load updated list from database
+        ViewData["Tools"] = tools;
         return RedirectToAction("Index");
     }
 
     [HttpPost]
-    public IActionResult DeleteTool(string toolName)
+    public async Task<IActionResult> DeleteTool(string toolName) // Keep toolName for DLL logic
     {
         try
         {
@@ -78,8 +80,8 @@ public class HomeController : Controller
                 }
             }
 
-            var tools = _toolService.GetTools();
-            ViewData["Tools"] = tools; // Update ViewData after deleting a tool
+            var tools = await _toolRepository.GetAllAsync(); // Load updated list from database
+            ViewData["Tools"] = tools;
             return RedirectToAction("Index");
         }
         catch (Exception ex)
@@ -89,18 +91,18 @@ public class HomeController : Controller
         }
     }
 
-    public IActionResult Privacy()
+    public async Task<IActionResult> Privacy()
     {
-        var tools = _toolService.GetTools();
-        ViewData["Tools"] = tools; // Pass tools to ViewData for the Privacy page
+        var tools = await _toolRepository.GetAllAsync(); // Load tools from database
+        ViewData["Tools"] = tools;
         return View();
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
+    public async Task<IActionResult> Error()
     {
-        var tools = _toolService.GetTools();
-        ViewData["Tools"] = tools; // Pass tools to ViewData for the Error page
+        var tools = await _toolRepository.GetAllAsync(); // Load tools from database
+        ViewData["Tools"] = tools;
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

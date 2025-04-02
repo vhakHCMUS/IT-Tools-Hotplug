@@ -1,4 +1,6 @@
-﻿@model List<TKPM_Project.Models.Tools.ITool>
+﻿@using TKPM_Project.Models.Tools
+@model List<Tool>
+<!-- Changed from ITool to Tool -->
 @using System.Linq
 @{
     ViewData["Title"] = "Home Page";
@@ -35,8 +37,6 @@
             <a href="/Account/Register" class="btn btn-primary">Sign Up he</a>
         </div>
     }
-
-
 
     <form asp-action="ImportTool" method="post" enctype="multipart/form-data" class="mb-4">
         <input type="file" name="dllFile" accept=".dll" class="form-control d-inline-block w-auto" />
