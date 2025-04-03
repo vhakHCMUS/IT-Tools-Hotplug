@@ -12,14 +12,16 @@ namespace TKPM_Project.Controllers;
 public class ToolController : Controller
 {
     private readonly ToolService _toolService;
-    private readonly ApplicationDbContext _dbContext; // Added for DB access
+    private readonly ApplicationDbContext _dbContext; // For DB access
     private readonly ILogger<ToolController> _logger;
+    private readonly IToolRepository _toolRepository; // For loading tool list from DB
 
-    public ToolController(ToolService toolService, ApplicationDbContext dbContext, ILogger<ToolController> logger)
+    public ToolController(ToolService toolService, ApplicationDbContext dbContext, ILogger<ToolController> logger, IToolRepository toolRepository)
     {
         _toolService = toolService;
         _dbContext = dbContext;
         _logger = logger;
+        _toolRepository = toolRepository;
     }
 
     [AcceptVerbs("GET", "POST")]
@@ -140,39 +142,45 @@ public class ToolController : Controller
             _dbContext.SaveChanges();
             _logger.LogInformation($"Deleted tool {toolName}");
         }
-        return RedirectToAction("Index");
+        return RedirectToAction("ToolManager"); // Redirect to ToolManager instead of Index
     }
 
     [HttpPost]
     public IActionResult TogglePremium(string toolName, bool isPremium)
     {
+        _logger.LogInformation($"TogglePremium called with toolName: {toolName}, isPremium: {isPremium}");
         var tool = _dbContext.Tools.FirstOrDefault(t => t.Name == toolName);
         if (tool != null)
         {
             tool.IsPremium = isPremium;
             _dbContext.SaveChanges();
             _logger.LogInformation($"Set {toolName} premium status to {isPremium}");
+            return Json(new { success = true });
         }
-        return RedirectToAction("Index");
+        _logger.LogWarning($"Tool {toolName} not found in database.");
+        return Json(new { success = false, message = "Tool not found" });
     }
 
     [HttpPost]
     public IActionResult ToggleAvailability(string toolName, bool isAvailable)
     {
+        _logger.LogInformation($"ToggleAvailability called with toolName: {toolName}, isAvailable: {isAvailable}");
         var tool = _dbContext.Tools.FirstOrDefault(t => t.Name == toolName);
         if (tool != null)
         {
             tool.IsAvailable = isAvailable;
             _dbContext.SaveChanges();
             _logger.LogInformation($"Set {toolName} availability to {isAvailable}");
+            return Json(new { success = true });
         }
-        return RedirectToAction("Index");
+        _logger.LogWarning($"Tool {toolName} not found in database.");
+        return Json(new { success = false, message = "Tool not found" });
     }
-}
 
-// Assuming this is defined elsewhere
-public class ApplicationDbContext : DbContext
-{
-    public DbSet<Tool> Tools { get; set; }
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+    public async Task<IActionResult> ToolManager()
+    {
+        var tools = await _toolRepository.GetAllAsync(); // Load tools from database
+        ViewData["Tools"] = tools;
+        return View("~/Views/Tool/ToolManager.cshtml", tools);
+    }
 }

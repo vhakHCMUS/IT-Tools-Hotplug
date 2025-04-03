@@ -91,12 +91,7 @@ public class HomeController : Controller
         }
     }
 
-    public async Task<IActionResult> ToolManager()
-    {
-        var tools = await _toolRepository.GetAllAsync(); // Load tools from database
-        ViewData["Tools"] = tools;
-        return View("~/Views/Tool/ToolManager.cshtml", tools);
-    }
+
 
     public async Task<IActionResult> Privacy()
     {

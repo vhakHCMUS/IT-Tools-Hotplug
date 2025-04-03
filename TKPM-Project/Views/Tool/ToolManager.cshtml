@@ -61,24 +61,18 @@
                     <td>@tool.Name</td>
                     <td>@tool.Category</td>
                     <td>
-                        <form asp-action="TogglePremium" method="post" style="display:inline;">
-                            <input type="hidden" name="toolName" value="@tool.Name" />
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="premium_@tool.Name" name="isPremium"
-                                @(tool.IsPremium ? "checked" : "") onchange="this.form.submit();" />
-                                <label class="form-check-label" for="premium_@tool.Name">@(tool.IsPremium ? "ON" : "OFF")</label>
-                            </div>
-                        </form>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="premium_@tool.Name"
+                            @(tool.IsPremium ? "checked" : "") onchange="togglePremium('@tool.Name', this);" />
+                            <label class="form-check-label" for="premium_@tool.Name">@(tool.IsPremium ? "ON" : "OFF")</label>
+                        </div>
                     </td>
                     <td>
-                        <form asp-action="ToggleAvailability" method="post" style="display:inline;">
-                            <input type="hidden" name="toolName" value="@tool.Name" />
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="available_@tool.Name" name="isAvailable"
-                                @(tool.IsAvailable ? "checked" : "") onchange="this.form.submit();" />
-                                <label class="form-check-label" for="available_@tool.Name">@(tool.IsAvailable ? "ON" : "OFF")</label>
-                            </div>
-                        </form>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="available_@tool.Name"
+                            @(tool.IsAvailable ? "checked" : "") onchange="toggleAvailability('@tool.Name', this);" />
+                            <label class="form-check-label" for="available_@tool.Name">@(tool.IsAvailable ? "ON" : "OFF")</label>
+                        </div>
                     </td>
                     <td>@tool.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
                     <td>
@@ -121,3 +115,54 @@ else
         margin-left: 5px;
     }
 </style>
+
+<!-- JavaScript for AJAX -->
+@section Scripts {
+    <script>
+        function togglePremium(toolName, element) {
+            $.ajax({
+                url: '@Url.Action("TogglePremium", "Tool")',
+                type: 'POST',
+                data: { toolName: toolName, isPremium: element.checked },
+                success: function (response) {
+                    if (response.success) {
+                        // Update the label text without refreshing the page
+                        $(element).next('label').text(element.checked ? 'ON' : 'OFF');
+                    } else {
+                        alert('Error: ' + response.message);
+                        // Revert the checkbox state on error
+                        element.checked = !element.checked;
+                    }
+                },
+                error: function (xhr, status, error) {
+                    alert('Error toggling premium status: ' + error);
+                    // Revert the checkbox state on error
+                    element.checked = !element.checked;
+                }
+            });
+        }
+
+        function toggleAvailability(toolName, element) {
+            $.ajax({
+                url: '@Url.Action("ToggleAvailability", "Tool")',
+                type: 'POST',
+                data: { toolName: toolName, isAvailable: element.checked },
+                success: function (response) {
+                    if (response.success) {
+                        // Update the label text without refreshing the page
+                        $(element).next('label').text(element.checked ? 'ON' : 'OFF');
+                    } else {
+                        alert('Error: ' + response.message);
+                        // Revert the checkbox state on error
+                        element.checked = !element.checked;
+                    }
+                },
+                error: function (xhr, status, error) {
+                    alert('Error toggling availability: ' + error);
+                    // Revert the checkbox state on error
+                    element.checked = !element.checked;
+                }
+            });
+        }
+    </script>
+}
