@@ -1,10 +1,65 @@
 ﻿@using TKPM_Project.Models.Tools
 @model List<Tool>
-<!-- Changed from ITool to Tool -->
 @using System.Linq
+
 @{
     ViewData["Title"] = "Home Page";
 }
+
+<style>
+    :root {
+        --primary-pink: #ffb6c1; /* Light Pink */
+        --secondary-pink: #f8c8dc; /* Soft Blush */
+        --accent-rose: #ff91a4; /* Rose Pink */
+        --background-light: #fff0f5; /* Lavender Blush */
+        --text-dark: #6a0572; /* Deep Purple */
+        --border-soft: #ffdde1; /* Soft Border */
+        --gold-gradient: linear-gradient(135deg, #ffd700, #ffec8b); /* Gold Effect */
+    }
+
+    body {
+        background-color: var(--background-light);
+        color: var(--text-dark);
+    }
+
+    .card {
+        background-color: #ffffff;
+        border: 2px solid var(--border-soft);
+        border-radius: 16px;
+        box-shadow: 2px 4px 10px rgba(255, 182, 193, 0.2);
+        transition: transform 0.2s;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(255, 182, 193, 0.3);
+        }
+
+    /* Premium Tool Styling */
+    .premium-card {
+        background: var(--gold-gradient) !important;
+        color: #8b6508 !important;
+        border: 3px solid #ffcc00;
+        animation: glow 1.5s infinite alternate;
+    }
+
+    @@keyframes glow {
+        0%
+
+    {
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+
+    100% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 1);
+    }
+
+    }
+
+    .bi-heart:hover {
+        color: #ff4d4f !important;
+    }
+</style>
 
 <div class="text-center">
     <h1 class="display-4">Welcome to IT Tools</h1>
@@ -34,7 +89,7 @@
     {
         <div class="mb-3">
             <a href="/Account/Login" class="btn btn-outline-primary me-2">Login</a>
-            <a href="/Account/Register" class="btn btn-primary">Sign Up he</a>
+            <a href="/Account/Register" class="btn btn-primary">Sign Up</a>
         </div>
     }
 
@@ -50,7 +105,7 @@
             @foreach (var tool in Model)
             {
                 <div class="col">
-                    <div class="card h-100 shadow-sm">
+                    <div class="card h-100 shadow-sm @(tool.IsPremium ? "premium-card" : "")">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0">@tool.Name</h5>
@@ -79,20 +134,3 @@
         <p>No tools available yet.</p>
     }
 </div>
-
-@section Scripts {
-    <style>
-        .card {
-            transition: transform 0.2s;
-        }
-
-            .card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            }
-
-        .bi-heart:hover {
-            color: #ff4d4f !important;
-        }
-    </style>
-}

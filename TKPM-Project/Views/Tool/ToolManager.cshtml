@@ -5,116 +5,165 @@
     ViewData["Title"] = "Tool Management";
 }
 
-<h1>Tool Management</h1>
-
-<!-- Import New Tool Section -->
-<h3>Import New Tool</h3>
-<form asp-action="ImportTool" method="post" enctype="multipart/form-data">
-    <div class="form-group">
-        <label for="dllFile">Select .dll file:</label>
-        <input type="file" name="dllFile" class="form-control" accept=".dll" />
-        <small class="form-text text-muted">Upload a .dll file to add a new tool.</small>
-    </div>
-    <button type="submit" class="btn btn-primary">Import Tool</button>
-</form>
-
-<!-- Search/Filter Section -->
-<h3>Existing Tools</h3>
-<div class="mb-3">
-    <form method="get" asp-action="Index" class="form-inline">
-        <div class="form-group me-2">
-            <label for="searchTerm" class="me-2">Search by Name:</label>
-            <input type="text" name="searchTerm" id="searchTerm" class="form-control" placeholder="Enter tool name" value="@ViewBag.SearchTerm" />
-        </div>
-        <div class="form-group me-2">
-            <label for="categoryFilter" class="me-2">Filter by Category:</label>
-            <select name="categoryFilter" id="categoryFilter" class="form-control">
-                <option value="">All Categories</option>
-                @foreach (var category in Model.Select(t => t.Category).Distinct())
-                {
-                    <option value="@category" selected="@(ViewBag.CategoryFilter == category ? "selected" : null)">@category</option>
-                }
-            </select>
-        </div>
-        <button type="submit" class="btn btn-secondary">Filter</button>
-    </form>
-</div>
-
-<!-- Tools Table -->
-@if (Model.Any())
-{
-    <table class="table table-striped">
-        <thead class="thead-dark">
-            <tr>
-                <th>Tool Name</th>
-                <th>Category</th>
-                <th>Premium</th>
-                <th>Available</th>
-                <th>Created At</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var tool in Model)
-            {
-                <tr>
-                    <td>@tool.Name</td>
-                    <td>@tool.Category</td>
-                    <td>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="premium_@tool.Name"
-                            @(tool.IsPremium ? "checked" : "") onchange="togglePremium('@tool.Name', this);" />
-                            <label class="form-check-label" for="premium_@tool.Name">@(tool.IsPremium ? "ON" : "OFF")</label>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="available_@tool.Name"
-                            @(tool.IsAvailable ? "checked" : "") onchange="toggleAvailability('@tool.Name', this);" />
-                            <label class="form-check-label" for="available_@tool.Name">@(tool.IsAvailable ? "ON" : "OFF")</label>
-                        </div>
-                    </td>
-                    <td>@tool.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                    <td>
-                        <a asp-action="Detail" asp-route-toolName="@tool.Name" class="btn btn-info btn-sm">View</a>
-                        <form asp-action="DeleteTool" method="post" style="display:inline;">
-                            <input type="hidden" name="toolName" value="@tool.Name" />
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete @tool.Name?')">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-
-    <div class="mt-3">
-        <p>Showing @Model.Count tools.</p>
-    </div>
-}
-else
-{
-    <p class="text-muted">No tools available.</p>
-}
-
-<!-- Styling -->
 <style>
-    .table th, .table td {
-        vertical-align: middle;
+    :root {
+        --primary-pink: #ffb6c1; /* Light Pink */
+        --secondary-pink: #f8c8dc; /* Soft Blush */
+        --accent-rose: #ff91a4; /* Rose Pink */
+        --background-light: #fff0f5; /* Lavender Blush */
+        --text-dark: #6a0572; /* Deep Purple */
+        --border-soft: #ffdde1; /* Soft Border */
     }
 
-    .btn-sm {
-        margin-right: 5px;
+    body {
+        background-color: var(--background-light);
+        color: var(--text-dark);
     }
 
-    .form-inline .form-group {
-        display: inline-block;
-        margin-bottom: 0;
+    .container {
+        max-width: 900px;
     }
 
-    .form-switch .form-check-label {
-        margin-left: 5px;
+    .card {
+        background-color: #ffffff;
+        border: 2px solid var(--border-soft);
+        border-radius: 16px;
+        box-shadow: 2px 4px 10px rgba(255, 182, 193, 0.2);
     }
+
+    .form-control, .form-select {
+        border-radius: 12px;
+        border: 1px solid var(--border-soft);
+    }
+
+    .btn-pink {
+        background-color: var(--primary-pink);
+        color: var(--text-dark);
+        border-radius: 20px;
+        padding: 10px 16px;
+        transition: 0.3s;
+    }
+
+        .btn-pink:hover {
+            background-color: var(--accent-rose);
+            color: white;
+        }
+
+    .table thead {
+        background-color: var(--secondary-pink);
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(255, 182, 193, 0.3);
+    }
+
+    .form-switch .form-check-input {
+        background-color: var(--primary-pink);
+        border: 1px solid var(--accent-rose);
+    }
+
+        .form-switch .form-check-input:checked {
+            background-color: var(--accent-rose);
+        }
 </style>
+
+<div class="container mt-4">
+    <h1 class="mb-4 text-center fw-bold" style="color: var(--text-dark);">🌸 Tool Management 🌸</h1>
+
+    <!-- Import New Tool -->
+    <div class="card p-3 mb-4">
+        <div class="card-body">
+            <h3 class="card-title">💾 Import New Tool</h3>
+            <form asp-action="ImportTool" method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="dllFile" class="form-label">Select .dll file:</label>
+                    <input type="file" name="dllFile" class="form-control" accept=".dll" />
+                </div>
+                <button type="submit" class="btn btn-pink">Import Tool</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filter/Search Section -->
+    <div class="card p-3 mb-4">
+        <div class="card-body">
+            <h3 class="card-title">🔍 Search & Filter</h3>
+            <form method="get" asp-action="Index" class="row g-3">
+                <div class="col-md-6">
+                    <label for="searchTerm" class="form-label">Search:</label>
+                    <input type="text" name="searchTerm" id="searchTerm" class="form-control" placeholder="Enter tool name" value="@ViewBag.SearchTerm" />
+                </div>
+                <div class="col-md-6">
+                    <label for="categoryFilter" class="form-label">Category:</label>
+                    <select name="categoryFilter" id="categoryFilter" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var category in Model.Select(t => t.Category).Distinct())
+                        {
+                            <option value="@category" selected="@(ViewBag.CategoryFilter == category ? "selected" : null)">@category</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 text-center">
+                    <button type="submit" class="btn btn-outline-secondary rounded-pill px-4">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tools Table -->
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Tool Name</th>
+                        <th>Category</th>
+                        <th>Premium</th>
+                        <th>Available</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var tool in Model)
+                    {
+                        <tr>
+                            <td>@tool.Name</td>
+                            <td>@tool.Category</td>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-flex justify-content-center">
+                                    <input class="form-check-input" type="checkbox" id="premium_@tool.Name"
+                                    @(tool.IsPremium ? "checked" : "") onchange="togglePremium('@tool.Name', this);" />
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-flex justify-content-center">
+                                    <input class="form-check-input" type="checkbox" id="available_@tool.Name"
+                                    @(tool.IsAvailable ? "checked" : "") onchange="toggleAvailability('@tool.Name', this);" />
+                                </div>
+                            </td>
+                            <td>@tool.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td>
+                                <a asp-action="Detail" asp-route-toolName="@tool.Name" class="btn btn-outline-info btn-sm rounded-pill">View</a>
+                                <form asp-action="DeleteTool" method="post" class="d-inline">
+                                    <input type="hidden" name="toolName" value="@tool.Name" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill" onclick="return confirm('Are you sure you want to delete @tool.Name?')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <p class="mt-3 text-muted text-center">Showing @Model.Count tools.</p>
+    }
+    else
+    {
+        <p class="text-muted text-center">No tools available.</p>
+    }
+</div>
 
 <!-- JavaScript for AJAX -->
 @section Scripts {
@@ -125,18 +174,13 @@ else
                 type: 'POST',
                 data: { toolName: toolName, isPremium: element.checked },
                 success: function (response) {
-                    if (response.success) {
-                        // Update the label text without refreshing the page
-                        $(element).next('label').text(element.checked ? 'ON' : 'OFF');
-                    } else {
+                    if (!response.success) {
                         alert('Error: ' + response.message);
-                        // Revert the checkbox state on error
                         element.checked = !element.checked;
                     }
                 },
-                error: function (xhr, status, error) {
-                    alert('Error toggling premium status: ' + error);
-                    // Revert the checkbox state on error
+                error: function () {
+                    alert('Error toggling premium status.');
                     element.checked = !element.checked;
                 }
             });
@@ -148,18 +192,13 @@ else
                 type: 'POST',
                 data: { toolName: toolName, isAvailable: element.checked },
                 success: function (response) {
-                    if (response.success) {
-                        // Update the label text without refreshing the page
-                        $(element).next('label').text(element.checked ? 'ON' : 'OFF');
-                    } else {
+                    if (!response.success) {
                         alert('Error: ' + response.message);
-                        // Revert the checkbox state on error
                         element.checked = !element.checked;
                     }
                 },
-                error: function (xhr, status, error) {
-                    alert('Error toggling availability: ' + error);
-                    // Revert the checkbox state on error
+                error: function () {
+                    alert('Error toggling availability.');
                     element.checked = !element.checked;
                 }
             });
