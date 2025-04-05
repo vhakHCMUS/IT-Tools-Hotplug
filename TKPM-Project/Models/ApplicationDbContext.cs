@@ -3,11 +3,14 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using TKPM_Project.Models;
 using TKPM_Project.Models.Tools;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public DbSet<Tool> Tools { get; set; }
+    public DbSet<UserLikedTool> UserLikedTools { get; set; }
+
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
@@ -43,6 +46,20 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             NormalizedName = "ADMIN"
         }
     };
+
+        modelBuilder.Entity<UserLikedTool>()
+        .HasKey(ult => new { ult.UserId, ult.ToolId });
+
+        modelBuilder.Entity<UserLikedTool>()
+        .HasOne(ult => ult.User)
+        .WithMany()
+        .HasForeignKey(ult => ult.UserId);
+
+        modelBuilder.Entity<UserLikedTool>()
+            .HasOne(ult => ult.Tool)
+            .WithMany()
+            .HasForeignKey(ult => ult.ToolId);
+
 
 
         modelBuilder.Entity<IdentityRole>().HasData(roles);

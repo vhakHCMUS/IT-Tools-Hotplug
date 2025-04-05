@@ -8,9 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Models\UserLikedTool.cs" />
-    <Compile Remove="Repositories\IUserLikedToolRepository.cs" />
-    <Compile Remove="Repositories\UserLikedToolRepository.cs" />
     <Compile Remove="Views\Register.cs" />
   </ItemGroup>
 

@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TKPM_Project.Models;
+using TKPM_Project.Repositories;
 using TKPM_Project.Services;
-using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +47,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Đăng ký Repository
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IToolRepository, ToolRepository>();
+builder.Services.AddScoped<IUserLikedToolRepository, UserLikedToolRepository>();
 
 var app = builder.Build();
 
@@ -56,11 +58,11 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseAuthentication();
-app.UseAuthorization();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
@@ -93,7 +95,7 @@ using (var scope = app.Services.CreateScope())
     if (adminUser == null)
     {
         adminUser = new ApplicationUser { UserName = adminEmail, Email = adminEmail };
-        await userManager.CreateAsync(adminUser, "Admin@123");
+        await userManager.CreateAsync(adminUser, "Admin@123"); //pass
         await userManager.AddToRoleAsync(adminUser, "Admin");
     }
 
