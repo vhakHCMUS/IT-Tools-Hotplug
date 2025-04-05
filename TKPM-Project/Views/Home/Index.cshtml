@@ -8,13 +8,13 @@
 
 <style>
     :root {
-        --primary-pink: #ffb6c1; /* Light Pink */
-        --secondary-pink: #f8c8dc; /* Soft Blush */
-        --accent-rose: #ff91a4; /* Rose Pink */
-        --background-light: #fff0f5; /* Lavender Blush */
-        --text-dark: #6a0572; /* Deep Purple */
-        --border-soft: #ffdde1; /* Soft Border */
-        --gold-gradient: linear-gradient(135deg, #ffd700, #ffec8b); /* Gold Effect */
+        --primary-pink: #ffb6c1;
+        --secondary-pink: #f8c8dc;
+        --accent-rose: #ff91a4;
+        --background-light: #fff0f5;
+        --text-dark: #6a0572;
+        --border-soft: #ffdde1;
+        --gold-gradient: linear-gradient(135deg, #ffd700, #ffec8b);
     }
 
     body {
@@ -35,7 +35,6 @@
             box-shadow: 0 4px 8px rgba(255, 182, 193, 0.3);
         }
 
-    /* Premium Tool Styling */
     .premium-card {
         background: var(--gold-gradient) !important;
         color: #8b6508 !important;
@@ -44,21 +43,31 @@
     }
 
     @@keyframes glow {
-        0%
+        0% {
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
 
-    {
-        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        100% {
+            box-shadow: 0 0 20px rgba(255, 215, 0, 1);
+        }
     }
 
-    100% {
-        box-shadow: 0 0 20px rgba(255, 215, 0, 1);
+    .bi-heart {
+        cursor: pointer;
+        font-size: 1.2rem;
     }
 
-    }
+        .bi-heart.liked {
+            color: #ff4d4f !important; /* Red when liked */
+        }
 
-    .bi-heart:hover {
-        color: #ff4d4f !important;
-    }
+        .bi-heart:not(.liked) {
+            color: black !important; /* White when not liked */
+        }
+
+        .bi-heart:hover {
+            color: #ff4d4f !important;
+        }
 </style>
 
 <div class="text-center">
@@ -72,17 +81,6 @@
             <form id="logoutForm">
                 <button type="button" class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
             </form>
-            <script>
-                async function logout() {
-                    const response = await fetch('/api/auth/logout', { method: 'POST' });
-                    if (response.ok) {
-                        alert("Logged out successfully");
-                        window.location.href = "/";
-                    } else {
-                        alert("Logout failed");
-                    }
-                }
-            </script>
         </div>
     }
     else
@@ -109,7 +107,14 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0">@tool.Name</h5>
-                                <a href="#" class="text-muted"><i class="bi bi-heart"></i></a>
+                                @if (User.Identity.IsAuthenticated)
+                                {
+                                    <i class="bi bi-heart" data-tool-id="@tool.Id" onclick="toggleLike(@tool.Id, this)"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-heart" style="color: #ffffff;"></i>
+                                }
                             </div>
                             <p class="card-text text-muted small mt-2">@tool.Description</p>
                             <p class="card-text text-muted small">
@@ -134,3 +139,73 @@
         <p>No tools available yet.</p>
     }
 </div>
+
+@if (User.Identity.IsAuthenticated)
+{
+    <script>
+        // Load initial like states when the page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            const hearts = document.querySelectorAll('.bi-heart');
+            for (let heart of hearts) {
+                const toolId = heart.getAttribute('data-tool-id');
+                await checkLikeStatus(toolId, heart);
+            }
+        });
+
+        // Check if a tool is liked
+        async function checkLikeStatus(toolId, heartElement) {
+            try {
+                const response = await fetch(`/api/userlikedtools/isliked?toolId=${toolId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (response.ok && data.isLiked) {
+                    heartElement.classList.add('liked');
+                } else {
+                    heartElement.classList.remove('liked');
+                }
+            } catch (error) {
+                console.error('Error checking like status:', error);
+            }
+        }
+
+        // Toggle like/unlike
+        async function toggleLike(toolId, heartElement) {
+            const isLiked = heartElement.classList.contains('liked');
+            const url = isLiked ? `/api/userlikedtools/unlike?toolId=${toolId}` : `/api/userlikedtools/like?toolId=${toolId}`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (response.ok) {
+                    heartElement.classList.toggle('liked');
+                    const message = await response.text();
+                    alert(message);
+                } else {
+                    const error = await response.text();
+                    alert(error);
+                }
+            } catch (error) {
+                console.error('Error toggling like:', error);
+                alert('An error occurred while toggling like.');
+            }
+        }
+
+        // Logout function
+        async function logout() {
+            const response = await fetch('/api/auth/logout', { method: 'POST' });
+            if (response.ok) {
+                alert("Logged out successfully");
+                window.location.href = "/";
+            } else {
+                alert("Logout failed");
+            }
+        }
+    </script>
+}

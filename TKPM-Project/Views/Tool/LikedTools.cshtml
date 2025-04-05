@@ -1,0 +1,167 @@
+﻿@{
+    ViewData["Title"] = "My Liked Tools";
+}
+
+<style>
+    :root {
+        --primary-pink: #ffb6c1;
+        --secondary-pink: #f8c8dc;
+        --accent-rose: #ff91a4;
+        --background-light: #fff0f5;
+        --text-dark: #6a0572;
+        --border-soft: #ffdde1;
+        --gold-gradient: linear-gradient(135deg, #ffd700, #ffec8b);
+    }
+
+    body {
+        background-color: var(--background-light);
+        color: var(--text-dark);
+    }
+
+    .card {
+        background-color: #ffffff;
+        border: 2px solid var(--border-soft);
+        border-radius: 16px;
+        box-shadow: 2px 4px 10px rgba(255, 182, 193, 0.2);
+        transition: transform 0.2s;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(255, 182, 193, 0.3);
+        }
+
+    .premium-card {
+        background: var(--gold-gradient) !important;
+        color: #8b6508 !important;
+        border: 3px solid #ffcc00;
+        animation: glow 1.5s infinite alternate;
+    }
+
+    @@keyframes glow {
+        0% {
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        100% {
+            box-shadow: 0 0 20px rgba(255, 215, 0, 1);
+        }
+    }
+
+    .bi-heart {
+        cursor: pointer;
+        font-size: 2rem;
+        transition: color 0.2s ease;
+    }
+
+        .bi-heart:not(.liked) {
+            color: #ffffff;
+            -webkit-text-stroke: 2px #ff4d4f;
+            text-stroke: 2px #ff4d4f;
+        }
+
+        .bi-heart.liked {
+            color: #ff4d4f !important;
+            -webkit-text-stroke: 0;
+            text-stroke: 0;
+        }
+
+        .bi-heart:hover {
+            color: #ff6666 !important;
+            -webkit-text-stroke: 0;
+            text-stroke: 0;
+        }
+</style>
+
+<div class="text-center">
+    <h1 class="display-4">My Liked Tools</h1>
+    <p>Here are the tools you've liked!</p>
+
+    <div class="mb-3">
+        <span>Welcome, @User.Identity.Name!</span>
+        <a href="/" class="btn btn-primary btn-sm">Back to Home</a>
+    </div>
+
+    <div id="likedToolsContainer" class="row row-cols-1 row-cols-md-3 g-4"></div>
+
+    <div id="noLikedTools" class="mt-4" style="display: none;">
+        <p>You haven't liked any tools yet. <a href="/">Explore some tools now!</a></p>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadLikedTools();
+    });
+
+    async function loadLikedTools() {
+        try {
+            const response = await fetch('/api/userlikedtools/liked', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (response.ok) {
+                const tools = await response.json();
+                const container = document.getElementById('likedToolsContainer');
+                const noToolsDiv = document.getElementById('noLikedTools');
+
+                if (tools.length === 0) {
+                    noToolsDiv.style.display = 'block';
+                    return;
+                }
+
+                noToolsDiv.style.display = 'none';
+                container.innerHTML = ''; // Clear existing content
+
+                tools.forEach(tool => {
+                    const cardHtml = `
+                        <div class="col">
+                            <div class="card h-100 shadow-sm ${tool.isPremium ? 'premium-card' : ''}">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-0">${tool.name}</h5>
+                                        <i class="bi bi-heart liked" data-tool-id="${tool.id}" onclick="toggleLike(${tool.id}, this)"></i>
+                                    </div>
+                                    <p class="card-text text-muted small mt-2">${tool.description || 'No description available'}</p>
+                                    <p class="card-text text-muted small">
+                                        <strong>Category:</strong> ${tool.category || 'Uncategorized'}<br />
+                                        <strong>Premium:</strong> ${tool.isPremium ? 'Yes' : 'No'}
+                                    </p>
+                                    <a href="/Tool/Detail?toolName=${tool.name}" class="btn btn-primary btn-sm">View Details</a>
+                                </div>
+                            </div>
+                        </div>`;
+                    container.innerHTML += cardHtml;
+                });
+            } else {
+                alert('Failed to load liked tools: ' + await response.text());
+            }
+        } catch (error) {
+            console.error('Error loading liked tools:', error);
+            alert('An error occurred while loading your liked tools.');
+        }
+    }
+
+    async function toggleLike(toolId, heartElement) {
+        const url = `/api/userlikedtools/unlike?toolId=${toolId}`;
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (response.ok) {
+                heartElement.closest('.col').remove(); // Remove the card from the view
+                const remainingCards = document.querySelectorAll('#likedToolsContainer .col');
+                if (remainingCards.length === 0) {
+                    document.getElementById('noLikedTools').style.display = 'block';
+                }
+                alert(await response.text());
+            } else {
+                alert(await response.text());
+            }
+        } catch (error) {
+            console.error('Error unliking tool:', error);
+            alert('An error occurred while unliking the tool.');
+        }
+    }
+</script>

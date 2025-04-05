@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TKPM_Project.Models.Tools;
 using TKPM_Project.Services;
 using Microsoft.Extensions.Logging;
@@ -12,9 +13,9 @@ namespace TKPM_Project.Controllers;
 public class ToolController : Controller
 {
     private readonly ToolService _toolService;
-    private readonly ApplicationDbContext _dbContext; // For DB access
+    private readonly ApplicationDbContext _dbContext;
     private readonly ILogger<ToolController> _logger;
-    private readonly IToolRepository _toolRepository; // For loading tool list from DB
+    private readonly IToolRepository _toolRepository;
 
     public ToolController(ToolService toolService, ApplicationDbContext dbContext, ILogger<ToolController> logger, IToolRepository toolRepository)
     {
@@ -101,7 +102,7 @@ public class ToolController : Controller
 
     public IActionResult Index(string searchTerm = null, string categoryFilter = null)
     {
-        var tools = _dbContext.Tools.ToList(); // Direct DB access since ToolService is unchanged
+        var tools = _dbContext.Tools.ToList();
         if (!string.IsNullOrEmpty(searchTerm))
         {
             tools = tools.Where(t => t.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
@@ -115,6 +116,16 @@ public class ToolController : Controller
         return View(tools);
     }
 
+    // New LikedTools action placed here
+    [Authorize]
+    [HttpGet]
+    [Route("tool/likedtools")]
+    public IActionResult LikedTools()
+    {
+        _logger.LogInformation($"User {User.Identity.Name} accessed LikedTools page.");
+        return View();
+    }
+
     [HttpPost]
     public IActionResult ImportTool(IFormFile dllFile)
     {
@@ -126,7 +137,6 @@ public class ToolController : Controller
             {
                 dllFile.CopyTo(stream);
             }
-            // Placeholder: Original ToolService doesn't have ImportTool
             _logger.LogInformation($"Imported tool from {dllFile.FileName} (not fully implemented in original ToolService)");
         }
         return RedirectToAction("Index");
@@ -142,7 +152,7 @@ public class ToolController : Controller
             _dbContext.SaveChanges();
             _logger.LogInformation($"Deleted tool {toolName}");
         }
-        return RedirectToAction("ToolManager"); // Redirect to ToolManager instead of Index
+        return RedirectToAction("ToolManager");
     }
 
     [HttpPost]
@@ -179,7 +189,7 @@ public class ToolController : Controller
 
     public async Task<IActionResult> ToolManager()
     {
-        var tools = await _toolRepository.GetAllAsync(); // Load tools from database
+        var tools = await _toolRepository.GetAllAsync();
         ViewData["Tools"] = tools;
         return View("~/Views/Tool/ToolManager.cshtml", tools);
     }
