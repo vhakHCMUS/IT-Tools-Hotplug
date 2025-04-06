@@ -55,7 +55,6 @@ namespace TKPM_Project.Services
 
         private async void SaveToolToDatabase(ITool tool)
         {
-            // Create a scope to resolve scoped services
             using (var scope = _serviceProvider.CreateScope())
             {
                 var toolRepository = scope.ServiceProvider.GetRequiredService<IToolRepository>();
@@ -90,18 +89,53 @@ namespace TKPM_Project.Services
             }
         }
 
-        public void UnloadTool(string toolName)
+        public async void UnloadTool(string toolName)
         {
             if (_tools.TryGetValue(toolName, out var toolInfo))
             {
+                // Dispose of the tool
                 toolInfo.Tool.Dispose();
                 _tools.Remove(toolName);
 
+                // Unload the assembly context
                 if (_contexts.TryGetValue(toolName, out var context))
                 {
                     context.Unload();
                     _contexts.Remove(toolName);
                 }
+
+                // Delete the DLL file
+                string dllPath = Path.Combine(_pluginPath, toolInfo.DllFileName);
+                try
+                {
+                    if (File.Exists(dllPath))
+                    {
+                        File.Delete(dllPath);
+                        Console.WriteLine($"Deleted DLL file {dllPath}.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to delete DLL file {dllPath}: {ex.Message}");
+                }
+
+                // Remove from the database
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var toolRepository = scope.ServiceProvider.GetRequiredService<IToolRepository>();
+                    var toolToDelete = (await toolRepository.GetByKeywordAsync(toolName))
+                        .FirstOrDefault(t => t.Name == toolName);
+
+                    if (toolToDelete != null)
+                    {
+                        await toolRepository.DeleteAsync(toolToDelete.Id);
+                        Console.WriteLine($"Deleted tool {toolName} from the database.");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Tool {toolName} not found for unloading.");
             }
         }
 
