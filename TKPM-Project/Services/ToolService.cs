@@ -1,6 +1,5 @@
 ﻿using System.Runtime.Loader;
 using TKPM_Project.Models.Tools;
-using System.Reflection;
 
 namespace TKPM_Project.Services
 {
@@ -9,14 +8,15 @@ namespace TKPM_Project.Services
         private readonly Dictionary<string, (ITool Tool, string DllFileName)> _tools = new();
         private readonly Dictionary<string, CustomAssemblyLoadContext> _contexts = new();
         private readonly string _pluginPath = Path.Combine(Directory.GetCurrentDirectory(), "Plugins");
+        private readonly IServiceProvider _serviceProvider;
 
-        public ToolService()
+        public ToolService(IServiceProvider serviceProvider)
         {
-            Directory.CreateDirectory(_pluginPath); // Tạo thư mục Plugins nếu chưa có
+            _serviceProvider = serviceProvider;
+            Directory.CreateDirectory(_pluginPath);
             LoadExistingTools();
         }
 
-        // Tải các công cụ hiện có trong thư mục Plugins
         private void LoadExistingTools()
         {
             foreach (var dll in Directory.GetFiles(_pluginPath, "*.dll"))
@@ -25,10 +25,8 @@ namespace TKPM_Project.Services
             }
         }
 
-        // Tải công cụ từ file .dll
         public void LoadToolFromDll(string dllPath)
         {
-            // Read the .dll file into memory to avoid locking the file on disk
             byte[] dllBytes = System.IO.File.ReadAllBytes(dllPath);
             using (var stream = new MemoryStream(dllBytes))
             {
@@ -47,22 +45,61 @@ namespace TKPM_Project.Services
                         _tools[tool.Name] = (tool, dllFileName);
                         _contexts[tool.Name] = context;
                         Console.WriteLine($"Loaded tool {tool.Name} from {dllPath}");
+
+                        // Save to database using a scope
+                        SaveToolToDatabase(tool);
                     }
                 }
             }
         }
 
-        // Xóa công cụ
+        private async void SaveToolToDatabase(ITool tool)
+        {
+            // Create a scope to resolve scoped services
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var toolRepository = scope.ServiceProvider.GetRequiredService<IToolRepository>();
+
+                var existingTool = (await toolRepository.GetByKeywordAsync(tool.Name))
+                    .FirstOrDefault(t => t.Name == tool.Name);
+
+                if (existingTool == null)
+                {
+                    var newTool = new Tool
+                    {
+                        Name = tool.Name,
+                        Description = tool.Description,
+                        IsPremium = tool.IsPremium,
+                        Category = tool.Category,
+                        IsAvailable = true,
+                        CreatedAt = DateTime.UtcNow,
+                        CustomViewTemplate = tool.CustomViewTemplate ?? "defaultTemplate"
+                    };
+                    await toolRepository.AddAsync(newTool);
+                    Console.WriteLine($"Saved tool {tool.Name} to the database.");
+                }
+                else
+                {
+                    existingTool.Description = tool.Description;
+                    existingTool.IsPremium = tool.IsPremium;
+                    existingTool.Category = tool.Category;
+                    existingTool.CustomViewTemplate = tool.CustomViewTemplate ?? "defaultTemplate";
+                    await toolRepository.UpdateAsync(existingTool);
+                    Console.WriteLine($"Updated tool {tool.Name} in the database.");
+                }
+            }
+        }
+
         public void UnloadTool(string toolName)
         {
             if (_tools.TryGetValue(toolName, out var toolInfo))
             {
-                toolInfo.Tool.Dispose(); // Gọi Dispose để giải phóng tài nguyên
+                toolInfo.Tool.Dispose();
                 _tools.Remove(toolName);
 
                 if (_contexts.TryGetValue(toolName, out var context))
                 {
-                    context.Unload(); // Xóa assembly khỏi bộ nhớ
+                    context.Unload();
                     _contexts.Remove(toolName);
                 }
             }
@@ -73,7 +110,6 @@ namespace TKPM_Project.Services
         public string GetDllFileName(string toolName) => _tools.TryGetValue(toolName, out var toolInfo) ? toolInfo.DllFileName : null;
     }
 
-    // Custom AssemblyLoadContext để hỗ trợ unload
     public class CustomAssemblyLoadContext : AssemblyLoadContext
     {
         public CustomAssemblyLoadContext() : base(isCollectible: true) { }
