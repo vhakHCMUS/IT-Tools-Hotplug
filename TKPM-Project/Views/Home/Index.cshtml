@@ -7,138 +7,384 @@
 }
 
 <style>
-    :root {
-        --primary-pink: #ffb6c1;
-        --secondary-pink: #f8c8dc;
-        --accent-rose: #ff91a4;
-        --background-light: #fff0f5;
-        --text-dark: #6a0572;
-        --border-soft: #ffdde1;
-        --gold-gradient: linear-gradient(135deg, #ffd700, #ffec8b);
+    /* Enhanced UI Styles */
+    .tool-section {
+        padding: 2rem 0;
     }
 
-    body {
-        background-color: var(--background-light);
+    .section-title {
+        position: relative;
+        margin-bottom: 2.5rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
         color: var(--text-dark);
     }
 
-    .card {
-        background-color: #ffffff;
-        border: 2px solid var(--border-soft);
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: var(--accent-rose);
+            border-radius: 2px;
+        }
+
+    .welcome-banner {
+        background: linear-gradient(135deg, var(--primary-pink), var(--secondary-pink));
         border-radius: 16px;
-        box-shadow: 2px 4px 10px rgba(255, 182, 193, 0.2);
-        transition: transform 0.2s;
+        padding: 2.5rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 8px 20px rgba(255, 145, 164, 0.15);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
     }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 8px rgba(255, 182, 193, 0.3);
+        .welcome-banner h1 {
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+            color: var(--text-dark);
         }
 
+        .welcome-banner p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+        }
+
+    /* Card Styling */
+    .tool-card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 8px 15px rgba(255, 182, 193, 0.15);
+        transition: all 0.3s ease;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+    }
+
+        .tool-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 20px rgba(255, 182, 193, 0.25);
+        }
+
+        .tool-card .card-body {
+            padding: 1.5rem;
+        }
+
+        .tool-card .card-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-dark);
+        }
+
+        .tool-card .card-text {
+            color: #555;
+            margin-bottom: 1rem;
+        }
+
+        .tool-card .category-badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            background-color: var(--secondary-pink);
+            color: var(--text-dark);
+            border-radius: 50px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+    /* Premium Card Styling */
     .premium-card {
-        background: var(--gold-gradient) !important;
-        color: #8b6508 !important;
-        border: 3px solid #ffcc00;
-        animation: glow 1.5s infinite alternate;
+        background: var(--gold-gradient);
+        color: #8b6508;
+        border: none;
+        position: relative;
     }
 
-    @@keyframes glow {
-        0% {
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        .premium-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
-        100% {
-            box-shadow: 0 0 20px rgba(255, 215, 0, 1);
+        .premium-card:hover::before {
+            opacity: 1;
         }
+
+        .premium-card .card-body {
+            position: relative;
+            z-index: 1;
+        }
+
+    .premium-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: #FFD700;
+        color: #8b6508;
+        font-weight: 600;
+        padding: 0.3rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+        animation: pulse 2s infinite;
     }
 
-    .bi-heart {
+    @@keyframes pulse {
+        0%
+
+    {
+        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 215, 0, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+    }
+
+    }
+
+    /* Button styling */
+    .btn {
+        border-radius: 50px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background-color: var(--accent-rose);
+        border-color: var(--accent-rose);
+    }
+
+        .btn-primary:hover {
+            background-color: #ff7a94;
+            border-color: #ff7a94;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 145, 164, 0.25);
+        }
+
+    .btn-outline-primary {
+        color: var(--accent-rose);
+        border-color: var(--accent-rose);
+    }
+
+        .btn-outline-primary:hover {
+            background-color: var(--accent-rose);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 145, 164, 0.25);
+        }
+
+    .btn-danger {
+        background-color: #ff6b6b;
+        border-color: #ff6b6b;
+    }
+
+        .btn-danger:hover {
+            background-color: #ff5252;
+            border-color: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 107, 107, 0.25);
+        }
+
+    /* Heart like button styling */
+    .heart-btn {
         cursor: pointer;
-        font-size: 1.2rem;
+        position: relative;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        background-color: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
-        .bi-heart.liked {
-            color: #ff4d4f !important; /* Red when liked */
+        .heart-btn i {
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
         }
 
-        .bi-heart:not(.liked) {
-            color: black !important; /* White when not liked */
+        .heart-btn:hover {
+            background-color: rgba(255, 77, 79, 0.1);
         }
 
-        .bi-heart:hover {
-            color: #ff4d4f !important;
+        .heart-btn i.liked {
+            color: #ff4d4f;
+        }
+
+        .heart-btn i:not(.liked) {
+            color: #666;
+        }
+
+        .heart-btn i:hover {
+            transform: scale(1.2);
+        }
+
+    /* Floating animations */
+    .floating {
+        animation: floating 3s ease-in-out infinite;
+    }
+
+    @@keyframes floating {
+        0%
+
+    {
+        transform: translate(0, 0px);
+    }
+
+    50% {
+        transform: translate(0, -10px);
+    }
+
+    100% {
+        transform: translate(0, 0px);
+    }
+
+    }
+
+    .floating-slow {
+        animation: floating-slow 5s ease-in-out infinite;
+    }
+
+    @@keyframes floating-slow {
+        0%
+
+    {
+        transform: translate(0, 0px);
+    }
+
+    50% {
+        transform: translate(0, -8px);
+    }
+
+    100% {
+        transform: translate(0, 0px);
+    }
+
+    }
+
+    /* Empty state styling */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--secondary-pink);
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h4 {
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: #666;
+            max-width: 500px;
+            margin: 0 auto 1.5rem;
         }
 </style>
 
-<div class="text-center">
+<div class="welcome-banner floating-slow">
     <h1 class="display-4">Welcome to IT Tools</h1>
-    <p>Upload a .dll file to add a new tool!</p>
+    <p>Discover and save your favorite IT tools in one place</p>
 
     @if (User.Identity.IsAuthenticated)
     {
-        <div class="mb-3">
-            <span>Welcome, @User.Identity.Name!</span>
-            <form id="logoutForm">
-                <button type="button" class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
-            </form>
+        <div class="d-flex justify-content-center align-items-center mb-3">
+            <span class="me-3">Welcome, <strong>@User.Identity.Name</strong>!</span>
+            <button type="button" class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
         </div>
     }
     else
     {
-        <div class="mb-3">
-            <a href="/Account/Login" class="btn btn-outline-primary me-2">Login</a>
+        <div class="d-flex justify-content-center">
+            <a href="/Account/Login" class="btn btn-outline-primary me-3">Login</a>
             <a href="/Account/Register" class="btn btn-primary">Sign Up</a>
         </div>
     }
+</div>
 
-    @* Commented out Import Tool section
-    <form asp-action="ImportTool" method="post" enctype="multipart/form-data" class="mb-4">
-        <input type="file" name="dllFile" accept=".dll" class="form-control d-inline-block w-auto" />
-        <button type="submit" class="btn btn-primary">Import Tool</button>
-    </form>
-    *@
+<div class="tool-section">
+    <h2 class="section-title text-center">Available Tools</h2>
 
-    <h2>Available Tools</h2>
     @if (Model != null && Model.Any())
     {
         <div class="row row-cols-1 row-cols-md-3 g-4">
-            @foreach (var tool in Model)
+            @foreach (var tool in Model.Take(6)) // Show only 6 tools as an example
             {
-                <div class="col">
-                    <div class="card h-100 shadow-sm @(tool.IsPremium ? "premium-card" : "")">
+                <div class="col floating">
+                    <div class="tool-card card @(tool.IsPremium ? "premium-card" : "")">
+                        @if (tool.IsPremium)
+                        {
+                            <span class="premium-badge">Premium</span>
+                        }
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="card-title mb-0">@tool.Name</h5>
+                                <h5 class="card-title">@tool.Name</h5>
                                 @if (User.Identity.IsAuthenticated)
                                 {
-                                    <i class="bi bi-heart" data-tool-id="@tool.Id" onclick="toggleLike(@tool.Id, this)"></i>
-                                }
-                                else
-                                {
-                                    <i class="bi bi-heart" style="color: #ffffff;"></i>
+                                    <div class="heart-btn">
+                                        <i class="bi bi-heart" data-tool-id="@tool.Id" onclick="toggleLike(@tool.Id, this)"></i>
+                                    </div>
                                 }
                             </div>
-                            <p class="card-text text-muted small mt-2">@tool.Description</p>
-                            <p class="card-text text-muted small">
-                                <strong>Category:</strong> @tool.Category<br />
-                                <strong>Premium:</strong> @(tool.IsPremium ? "Yes" : "No")
-                            </p>
-                            <div class="d-flex justify-content-between">
+
+                            <span class="category-badge">@tool.Category</span>
+                            <p class="card-text">@tool.Description</p>
+
+                            <div class="d-flex justify-content-between align-items-center mt-3">
                                 <a asp-controller="Tool" asp-action="Detail" asp-route-toolName="@tool.Name" class="btn btn-primary btn-sm">View Details</a>
-                                <form asp-action="DeleteTool" method="post" style="display:inline;">
-                                    <input type="hidden" name="toolName" value="@tool.Name" />
-                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete @tool.Name?');">Delete</button>
-                                </form>
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <form asp-action="DeleteTool" method="post" style="display:inline;">
+                                        <input type="hidden" name="toolName" value="@tool.Name" />
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete @tool.Name?');">Delete</button>
+                                    </form>
+                                }
                             </div>
                         </div>
                     </div>
                 </div>
             }
         </div>
+
+        <div class="text-center mt-4">
+            <a asp-controller="Tool" asp-action="Tools" class="btn btn-outline-primary">View All Tools</a>
+        </div>
     }
     else
     {
-        <p>No tools available yet.</p>
+        <div class="empty-state">
+            <i class="bi bi-tools floating"></i>
+            <h4>No tools available yet</h4>
+            <p>Be the first to add tools to our collection!</p>
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-controller="Tool" asp-action="ToolManager" class="btn btn-primary">Add New Tool</a>
+            }
+        </div>
     }
 </div>
 
@@ -174,39 +420,104 @@
             }
         }
 
-        // Toggle like/unlike
+        // Toggle like/unlike with animation
         async function toggleLike(toolId, heartElement) {
             const isLiked = heartElement.classList.contains('liked');
             const url = isLiked ? `/api/userlikedtools/unlike?toolId=${toolId}` : `/api/userlikedtools/like?toolId=${toolId}`;
+
             try {
+                // Add clicking animation
+                heartElement.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    heartElement.style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        heartElement.style.transform = 'scale(1)';
+                    }, 150);
+                }, 150);
+
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 });
+
                 if (response.ok) {
                     heartElement.classList.toggle('liked');
+
+                    // Use toast notification instead of alert
                     const message = await response.text();
-                    alert(message);
+                    showToast(message, isLiked ? 'info' : 'success');
                 } else {
                     const error = await response.text();
-                    alert(error);
+                    showToast(error, 'error');
                 }
             } catch (error) {
                 console.error('Error toggling like:', error);
-                alert('An error occurred while toggling like.');
+                showToast('An error occurred while toggling like.', 'error');
             }
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            // Create toast container if it doesn't exist
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.style.position = 'fixed';
+                toastContainer.style.bottom = '20px';
+                toastContainer.style.right = '20px';
+                toastContainer.style.zIndex = '1050';
+                document.body.appendChild(toastContainer);
+            }
+
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.style.minWidth = '250px';
+            toast.style.backgroundColor = type === 'success' ? '#4CAF50' :
+                                        type === 'error' ? '#f44336' : '#2196F3';
+            toast.style.color = 'white';
+            toast.style.padding = '16px';
+            toast.style.borderRadius = '8px';
+            toast.style.marginBottom = '10px';
+            toast.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            toast.style.fontSize = '14px';
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s ease-in';
+
+            // Add icon
+            const icon = type === 'success' ? 'bi-check-circle' :
+                        type === 'error' ? 'bi-exclamation-circle' : 'bi-info-circle';
+            toast.innerHTML = `<i class="bi ${icon} me-2"></i>${message}`;
+
+            // Add to container
+            toastContainer.appendChild(toast);
+
+            // Show with animation
+            setTimeout(() => {
+                toast.style.opacity = '1';
+            }, 50);
+
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    toastContainer.removeChild(toast);
+                }, 300);
+            }, 3000);
         }
 
         // Logout function
         async function logout() {
             const response = await fetch('/api/auth/logout', { method: 'POST' });
             if (response.ok) {
-                alert("Logged out successfully");
-                window.location.href = "/";
+                showToast("Logged out successfully", "success");
+                setTimeout(() => {
+                    window.location.href = "/";
+                }, 1000);
             } else {
-                alert("Logout failed");
+                showToast("Logout failed", "error");
             }
         }
     </script>

@@ -8,7 +8,10 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/TKPM_Project.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <!-- Soft Pink Theme CSS -->
+    <!-- Add modern Animation library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
+    <!-- Enhanced Soft Pink Theme CSS -->
     <style>
         /* 🎨 Soft Pink-Light Color Palette */
         :root {
@@ -21,178 +24,327 @@
             --gold-gradient: linear-gradient(135deg, #ffd700, #ffec8b); /* Gold Effect */
         }
 
-        /* 🌸 Apply Soft Theme */
+        /* 🌸 Apply Modern Flat Theme */
         body {
             background-color: var(--background-light);
             color: var(--text-dark);
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
         }
 
+        /* Modern Header with Elevation */
         header {
-            background-color: var(--primary-pink);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(255, 145, 164, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
         }
 
-            header .navbar {
-                background-color: var(--primary-pink);
+            header.scrolled {
+                box-shadow: 0 4px 16px rgba(255, 145, 164, 0.25);
             }
 
-            header .navbar-brand {
-                color: var(--text-dark);
-                font-weight: bold;
-            }
+        .navbar {
+            padding: 0.75rem 1rem;
+        }
 
-            header .navbar-nav .nav-link {
-                color: var(--text-dark);
-                border: 1px solid var(--accent-rose); /* Pink outline */
-                border-radius: 50px; /* Rounder buttons */
-                padding: 12px 20px; /* More padding for bigger buttons */
-                margin-right: 12px; /* More space between buttons */
-                transition: all 0.3s ease;
-            }
-
-                header .navbar-nav .nav-link:hover {
-                    background-color: var(--accent-rose);
-                    color: white;
-                    border-color: var(--accent-rose); /* Maintain pink outline on hover */
-                }
-
-                header .navbar-nav .nav-link:focus {
-                    outline: none; /* Remove default outline */
-                    box-shadow: 0 0 0 2px var(--accent-rose); /* Soft pink focus shadow */
-                }
-
-                header .navbar-nav .nav-link.active {
-                    background-color: var(--accent-rose);
-                    color: white;
-                    border-color: var(--accent-rose); /* Active state pink outline */
-                }
-
-        footer {
-            background-color: var(--primary-pink);
+        .navbar-brand {
             color: var(--text-dark);
-            padding: 1rem 0;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            position: relative;
         }
 
-            footer a {
+            .navbar-brand:hover {
                 color: var(--accent-rose);
             }
 
-                footer a:hover {
-                    text-decoration: underline;
+            .navbar-brand::after {
+                content: '';
+                position: absolute;
+                bottom: -3px;
+                left: 0;
+                width: 0;
+                height: 3px;
+                background-color: var(--accent-rose);
+                transition: width 0.3s ease;
+            }
+
+            .navbar-brand:hover::after {
+                width: 100%;
+            }
+
+        /* Navigation Links Styling */
+        .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            margin: 0 0.25rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+            .nav-link::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 50%;
+                width: 0;
+                height: 2px;
+                background-color: var(--accent-rose);
+                transition: all 0.3s ease;
+                transform: translateX(-50%);
+            }
+
+            .nav-link:hover {
+                color: var(--accent-rose) !important;
+                background-color: rgba(255, 182, 193, 0.1);
+            }
+
+                .nav-link:hover::after {
+                    width: 70%;
                 }
 
-        .container {
-            background-color: #ffffff;
+            .nav-link.active {
+                color: var(--accent-rose) !important;
+                background-color: rgba(255, 182, 193, 0.15);
+            }
+
+                .nav-link.active::after {
+                    width: 70%;
+                }
+
+        /* Button Styling */
+        .btn {
             border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(255, 182, 193, 0.2);
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            letter-spacing: 0.3px;
+            box-shadow: none;
         }
 
-        .card {
-            background-color: #ffffff;
-            border: 2px solid var(--border-soft);
-            border-radius: 16px;
-            box-shadow: 2px 4px 10px rgba(255, 182, 193, 0.2);
-            transition: transform 0.2s;
-        }
-
-            .card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 4px 8px rgba(255, 182, 193, 0.3);
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             }
 
         .btn-primary {
             background-color: var(--accent-rose);
             border-color: var(--accent-rose);
-            border-radius: 50px; /* Rounder buttons */
-            padding: 12px 24px; /* More padding for bigger buttons */
-            transition: background-color 0.3s ease;
         }
 
-            .btn-primary:hover {
-                background-color: #ff5c8e;
-                border-color: #ff5c8e;
+            .btn-primary:hover, .btn-primary:focus {
+                background-color: #ff7a94;
+                border-color: #ff7a94;
             }
 
-        /* User profile button styles */
+        .btn-outline-primary {
+            color: var(--accent-rose);
+            border-color: var(--accent-rose);
+        }
+
+            .btn-outline-primary:hover, .btn-outline-primary:focus {
+                background-color: var(--accent-rose);
+                color: white;
+            }
+
+        /* User Profile Button */
         .user-profile-btn {
             display: flex;
             align-items: center;
-            background-color: var(--secondary-pink);
-            border: 1px solid var(--accent-rose);
+            background-color: white;
+            border: 2px solid var(--secondary-pink);
             border-radius: 50px;
-            padding: 8px 16px;
+            padding: 0.5rem 1rem;
             color: var(--text-dark);
             transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(255, 182, 193, 0.15);
         }
 
             .user-profile-btn:hover {
-                background-color: var(--accent-rose);
-                color: white;
+                background-color: var(--secondary-pink);
+                color: var(--text-dark);
+                box-shadow: 0 4px 12px rgba(255, 182, 193, 0.25);
+                transform: translateY(-2px);
             }
 
             .user-profile-btn i {
                 margin-right: 8px;
                 font-size: 1.2em;
+                color: var(--accent-rose);
             }
 
-        /* Dropdown menu styling */
+        /* Modern Dropdown Menu */
         .user-dropdown .dropdown-menu {
             border-radius: 12px;
-            border: 1px solid var(--border-soft);
-            box-shadow: 0 4px 8px rgba(255, 182, 193, 0.3);
+            border: none;
+            box-shadow: 0 8px 16px rgba(255, 182, 193, 0.2);
             overflow: hidden;
+            animation: fadeIn 0.3s ease;
+            margin-top: 10px;
+        }
+
+        @@keyframes fadeIn {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         }
 
         .user-dropdown .dropdown-item {
             color: var(--text-dark);
-            padding: 10px 20px;
-            transition: background-color 0.2s;
+            padding: 0.75rem 1.25rem;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
         }
 
             .user-dropdown .dropdown-item:hover {
                 background-color: var(--secondary-pink);
+                color: var(--text-dark);
+            }
+
+            .user-dropdown .dropdown-item i {
+                margin-right: 10px;
+                font-size: 1.1em;
+                color: var(--accent-rose);
             }
 
         .user-dropdown .dropdown-divider {
             border-color: var(--border-soft);
+            margin: 0.5rem 0;
         }
+
+        /* Main Container */
+        .main-container {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(255, 182, 193, 0.15);
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @@keyframes fadeInUp {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        /* Modern Footer */
+        footer {
+            background-color: white;
+            color: var(--text-dark);
+            padding: 1.5rem 0;
+            box-shadow: 0 -4px 12px rgba(255, 145, 164, 0.1);
+            text-align: center;
+        }
+
+            footer a {
+                color: var(--accent-rose);
+                transition: all 0.3s ease;
+                position: relative;
+            }
+
+                footer a::after {
+                    content: '';
+                    position: absolute;
+                    bottom: -2px;
+                    left: 0;
+                    width: 0;
+                    height: 2px;
+                    background-color: var(--accent-rose);
+                    transition: width 0.3s ease;
+                }
+
+                footer a:hover {
+                    color: var(--accent-rose);
+                    text-decoration: none;
+                }
+
+                    footer a:hover::after {
+                        width: 100%;
+                    }
     </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">TKPM_Project</a>
+    <header id="main-header">
+        <nav class="navbar navbar-expand-lg navbar-light">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-tools me-2"></i>TKPM_Project
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
+                    <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "Index" && ViewContext.RouteData.Values["Controller"].ToString() == "Home" ? "active" : "")"
+                               asp-area="" asp-controller="Home" asp-action="Index">
+                                <i class="bi bi-house me-1"></i>Home
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "Tools" ? "active" : "")"
+                               asp-area="" asp-controller="Tool" asp-action="Tools">
+                                <i class="bi bi-grid me-1"></i>Tools
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Tool" asp-action="Tools">Tools</a>
+                            <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "Privacy" ? "active" : "")"
+                               asp-area="" asp-controller="Home" asp-action="Privacy">
+                                <i class="bi bi-shield-check me-1"></i>Privacy
+                            </a>
                         </li>
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Tool" asp-action="ToolManager">Tool Manager</a>
+                                <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "ToolManager" ? "active" : "")"
+                                   asp-area="" asp-controller="Tool" asp-action="ToolManager">
+                                    <i class="bi bi-gear me-1"></i>Tool Manager
+                                </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="UserManager">User Manager</a>
+                                <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "UserManager" ? "active" : "")"
+                                   asp-area="" asp-controller="User" asp-action="UserManager">
+                                    <i class="bi bi-people me-1"></i>User Manager
+                                </a>
                             </li>
                         }
                         @if (User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Tool" asp-action="LikedTools">Liked Tools</a>
+                                <a class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "LikedTools" ? "active" : "")"
+                                   asp-area="" asp-controller="Tool" asp-action="LikedTools">
+                                    <i class="bi bi-heart me-1"></i>Liked Tools
+                                </a>
                             </li>
                         }
                     </ul>
@@ -217,8 +369,8 @@
                     }
                     else
                     {
-                        <div class="d-flex">
-                            <a class="btn btn-primary me-2" asp-area="Identity" asp-page="/Account/Login">Login</a>
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-primary" asp-area="Identity" asp-page="/Account/Login">Login</a>
                             <a class="btn btn-outline-primary" asp-area="Identity" asp-page="/Account/Register">Register</a>
                         </div>
                     }
@@ -227,13 +379,13 @@
         </nav>
     </header>
 
-    <div class="container">
+    <div class="main-container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <footer class="footer text-muted">
         <div class="container">
             © 2025 - TKPM_Project - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
@@ -242,6 +394,17 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        // Add header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('main-header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
