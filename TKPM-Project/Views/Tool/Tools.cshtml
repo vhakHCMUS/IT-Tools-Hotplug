@@ -57,11 +57,11 @@
     }
 
         .bi-heart.liked {
-            color: #ff4d4f !important; /* Red when liked */
+            color: #ff4d4f !important;
         }
 
         .bi-heart:not(.liked) {
-            color: black !important; /* Black when not liked */
+            color: black !important;
         }
 
         .bi-heart:hover {
@@ -70,53 +70,72 @@
 </style>
 
 <div class="text-center">
-    @if (Model != null && Model.Any())
-    {
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            @foreach (var tool in Model)
-            {
-                <div class="col">
-                    <div class="card h-100 shadow-sm @(tool.IsPremium ? "premium-card" : "")">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="card-title mb-0">@tool.Name</h5>
-                                @if (User.Identity.IsAuthenticated)
-                                {
-                                    <i class="bi bi-heart" data-tool-id="@tool.Id" onclick="toggleLike(@tool.Id, this)"></i>
-                                }
-                                else
-                                {
-                                    <i class="bi bi-heart"></i>
-                                }
-                            </div>
-                            <p class="card-text text-muted small mt-2">@tool.Description</p>
-                            <p class="card-text text-muted small">
-                                <strong>Category:</strong> @tool.Category<br />
-                                <strong>Premium:</strong> @(tool.IsPremium ? "Yes" : "No")
-                            </p>
-                            <div class="d-flex justify-content-between">
-                                <a asp-controller="Tool" asp-action="Detail" asp-route-toolName="@tool.Name" class="btn btn-primary btn-sm">View Details</a>
-                                <form asp-action="DeleteTool" method="post" style="display:inline;">
-                                    <input type="hidden" name="toolName" value="@tool.Name" />
-                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete @tool.Name?');">Delete</button>
-                                </form>
+    <div class="mb-4">
+        <form id="searchForm" class="d-flex justify-content-center gap-3">
+            <input type="text" class="form-control w-25" id="searchName" placeholder="Search by name...">
+            <select class="form-select w-25" id="searchCategory">
+                <option value="">All Categories</option>
+                <option value="Utility">Utility</option>
+                <option value="Productivity">Productivity</option>
+                <option value="Development">Development</option>
+            </select>
+            <select class="form-select w-25" id="searchPremium">
+                <option value="">All</option>
+                <option value="true">Premium Only</option>
+                <option value="false">Free Only</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
+
+    <div id="toolsContainer">
+        @if (Model != null && Model.Any())
+        {
+            <div class="row row-cols-1 row-cols-md-3 g-4" id="toolsList">
+                @foreach (var tool in Model)
+                {
+                    <div class="col">
+                        <div class="card h-100 shadow-sm @(tool.IsPremium ? "premium-card" : "")">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">@tool.Name</h5>
+                                    @if (User.Identity.IsAuthenticated)
+                                    {
+                                        <i class="bi bi-heart" data-tool-id="@tool.Id" onclick="toggleLike(@tool.Id, this)"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-heart"></i>
+                                    }
+                                </div>
+                                <p class="card-text text-muted small mt-2">@tool.Description</p>
+                                <p class="card-text text-muted small">
+                                    <strong>Category:</strong> @tool.Category<br />
+                                    <strong>Premium:</strong> @(tool.IsPremium ? "Yes" : "No")
+                                </p>
+                                <div class="d-flex justify-content-between">
+                                    <a asp-controller="Tool" asp-action="Detail" asp-route-toolName="@tool.Name" class="btn btn-primary btn-sm">View Details</a>
+                                    <form asp-action="DeleteTool" method="post" style="display:inline;">
+                                        <input type="hidden" name="toolName" value="@tool.Name" />
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete @tool.Name?');">Delete</button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            }
-        </div>
-    }
-    else
-    {
-        <p>No tools available yet.</p>
-    }
+                }
+            </div>
+        }
+        else
+        {
+            <p>No tools available yet.</p>
+        }
+    </div>
 </div>
 
 @if (User.Identity.IsAuthenticated)
 {
     <script>
-        // Load initial like states when the page loads
         document.addEventListener('DOMContentLoaded', async () => {
             const hearts = document.querySelectorAll('.bi-heart');
             for (let heart of hearts) {
@@ -125,7 +144,6 @@
             }
         });
 
-        // Check if a tool is liked
         async function checkLikeStatus(toolId, heartElement) {
             try {
                 const response = await fetch(`/api/userlikedtools/isliked?toolId=${toolId}`, {
@@ -145,7 +163,6 @@
             }
         }
 
-        // Toggle like/unlike
         async function toggleLike(toolId, heartElement) {
             const isLiked = heartElement.classList.contains('liked');
             const url = isLiked ? `/api/userlikedtools/unlike?toolId=${toolId}` : `/api/userlikedtools/like?toolId=${toolId}`;
@@ -168,6 +185,109 @@
                 console.error('Error toggling like:', error);
                 alert('An error occurred while toggling like.');
             }
+        }
+
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            searchTools();
+        });
+
+        document.getElementById('searchName').addEventListener('input', debounce(searchTools, 300));
+        document.getElementById('searchCategory').addEventListener('change', searchTools);
+        document.getElementById('searchPremium').addEventListener('change', searchTools);
+
+        async function searchTools() {
+            const searchName = document.getElementById('searchName').value;
+            const searchCategory = document.getElementById('searchCategory').value;
+            const searchPremium = document.getElementById('searchPremium').value;
+
+            try {
+                const response = await fetch('/Tool/SearchTools?' + new URLSearchParams({
+                    name: searchName,
+                    category: searchCategory,
+                    premium: searchPremium
+                }), {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Search request failed: ${response.status} - ${errorText}`);
+                }
+
+                const tools = await response.json();
+                updateToolsDisplay(tools);
+            } catch (error) {
+                console.error('Error searching tools:', error);
+                document.getElementById('toolsContainer').innerHTML =
+                    `<p class="text-danger">Error loading tools: ${error.message}. Please try again.</p>`;
+            }
+        }
+
+        function updateToolsDisplay(tools) {
+            const toolsList = document.getElementById('toolsList');
+            if (!toolsList) return;
+
+            if (tools.length === 0) {
+                toolsList.innerHTML = '<p>No tools found matching your criteria.</p>';
+                return;
+            }
+
+            let html = '';
+            tools.forEach(tool => {
+                const premiumClass = tool.isPremium ? 'premium-card' : '';
+                html += `
+                    <div class="col">
+                        <div class="card h-100 shadow-sm ${premiumClass}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">${tool.name}</h5>
+                                    <i class="bi bi-heart" data-tool-id="${tool.id}"
+                                       onclick="toggleLike(${tool.id}, this)"></i>
+                                </div>
+                                <p class="card-text text-muted small mt-2">${tool.description || ''}</p>
+                                <p class="card-text text-muted small">
+                                    <strong>Category:</strong> ${tool.category || 'N/A'}<br />
+                                    <strong>Premium:</strong> ${tool.isPremium ? 'Yes' : 'No'}
+                                </p>
+                                <div class="d-flex justify-content-between">
+                                    <a href="/Tool/Detail?toolName=${tool.name}"
+                                       class="btn btn-primary btn-sm">View Details</a>
+                                    <form action="/Tool/DeleteTool" method="post" style="display:inline;">
+                                        <input type="hidden" name="toolName" value="${tool.name}" />
+                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                onclick="return confirm('Are you sure you want to delete ${tool.name}?');">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            toolsList.innerHTML = html;
+
+            const hearts = document.querySelectorAll('.bi-heart');
+            hearts.forEach(heart => {
+                const toolId = heart.getAttribute('data-tool-id');
+                checkLikeStatus(toolId, heart);
+            });
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
         }
     </script>
 }

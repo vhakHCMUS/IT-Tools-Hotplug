@@ -216,6 +216,55 @@ public class ToolController : Controller
         return View(tools);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> SearchTools(string name, string category, string premium)
+    {
+        try
+        {
+            if (_dbContext == null || _dbContext.Tools == null)
+            {
+                _logger.LogError("Database context or Tools DbSet is null");
+                return StatusCode(500, "Database configuration error");
+            }
+
+            var toolsQuery = _dbContext.Tools.AsQueryable();
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                toolsQuery = toolsQuery.Where(t => t.Name != null && t.Name.ToLower().Contains(name.ToLower()));
+            }
+
+            if (!string.IsNullOrEmpty(category))
+            {
+                toolsQuery = toolsQuery.Where(t => t.Category != null && t.Category == category);
+            }
+
+            if (!string.IsNullOrEmpty(premium) && bool.TryParse(premium, out bool isPremium))
+            {
+                toolsQuery = toolsQuery.Where(t => t.IsPremium == isPremium);
+            }
+
+            var tools = await toolsQuery
+                .Select(t => new
+                {
+                    Id = t.Id,
+                    Name = t.Name ?? "N/A",
+                    Description = t.Description ?? "",
+                    Category = t.Category ?? "Uncategorized",
+                    IsPremium = t.IsPremium
+                })
+                .ToListAsync();
+
+            _logger.LogInformation($"Search returned {tools.Count} tools for name: {name ?? "none"}, category: {category ?? "none"}, premium: {premium ?? "none"}");
+            return Json(tools);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in SearchTools: {Message}", ex.Message);
+            return StatusCode(500, $"Error searching tools: {ex.Message}");
+        }
+    }
+
     public async Task<IActionResult> ToolManager()
     {
         var tools = await _toolRepository.GetAllAsync();
