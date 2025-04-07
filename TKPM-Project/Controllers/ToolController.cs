@@ -201,6 +201,21 @@ public class ToolController : Controller
         return Json(new { success = false, message = "Tool not found" });
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Tools()
+    {
+        var tools = await _toolRepository.GetAllAsync();
+        if (tools == null || !tools.Any())
+        {
+            _logger.LogWarning("No tools retrieved for Tools view.");
+        }
+        else
+        {
+            _logger.LogInformation($"Retrieved {tools.Count()} tools for Tools view.");
+        }
+        return View(tools);
+    }
+
     public async Task<IActionResult> ToolManager()
     {
         var tools = await _toolRepository.GetAllAsync();
@@ -214,4 +229,5 @@ public class ToolController : Controller
         }
         return View(tools); // Uses default view "ToolManager.cshtml"
     }
+
 }
