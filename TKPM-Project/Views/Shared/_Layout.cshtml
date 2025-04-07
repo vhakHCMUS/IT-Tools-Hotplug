@@ -93,7 +93,7 @@
             background-color: #ffffff;
             border: 2px solid var(--border-soft);
             border-radius: 16px;
-            box-shadow: 2px 4px 10px rgba(255, 182, 193, 0.2);
+            box-shadow: 2px 4px 10px rgba(255 your182, 193, 0.2);
             transition: transform 0.2s;
         }
 
@@ -115,7 +115,6 @@
                 border-color: #ff5c8e;
             }
     </style>
-
 </head>
 <body>
     <header>
@@ -134,14 +133,16 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Tool" asp-action="ToolManager">Tool manager</a>
-                        </li>
-                        <!-- Inside your nav bar, e.g., within <ul class="navbar-nav"> -->
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Tool" asp-action="ToolManager">Tool Manager</a>
+                            </li>
+                        }
                         @if (User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Tool" asp-action="likedtools">Liked Tools</a>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Tool" asp-action="LikedTools">Liked Tools</a>
                             </li>
                         }
                     </ul>
@@ -158,7 +159,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2025 - TKPM_Project - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            © 2025 - TKPM_Project - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
 

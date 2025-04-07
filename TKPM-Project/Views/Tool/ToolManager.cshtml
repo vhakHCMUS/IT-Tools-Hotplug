@@ -2,19 +2,21 @@
 @model List<Tool>
 
 @{
-    ViewData["Title"] = "Tool Management";
+    ViewData["Title"] = "Tool Manager";
 }
 
+<!-- Same styles as before -->
 <style>
     :root {
-        --primary-pink: #ffb6c1; /* Light Pink */
-        --secondary-pink: #f8c8dc; /* Soft Blush */
-        --accent-rose: #ff91a4; /* Rose Pink */
-        --background-light: #fff0f5; /* Lavender Blush */
-        --text-dark: #6a0572; /* Deep Purple */
-        --border-soft: #ffdde1; /* Soft Border */
+        --primary-pink: #ffb6c1;
+        --secondary-pink: #f8c8dc;
+        --accent-rose: #ff91a4;
+        --background-light: #fff0f5;
+        --text-dark: #6a0572;
+        --border-soft: #ffdde1;
     }
 
+    /* Rest of the styles remain the same */
     body {
         background-color: var(--background-light);
         color: var(--text-dark);
@@ -68,43 +70,24 @@
 </style>
 
 <div class="container mt-4">
-    <h1 class="mb-4 text-center fw-bold" style="color: var(--text-dark);">🌸 Tool Management 🌸</h1>
+    <h1 class="mb-4 text-center fw-bold" style="color: var(--text-dark);">🌸 Tool Manager 🌸</h1>
 
-    <!-- Import New Tool -->
+    <!-- New Import Section for ToolManager -->
     <div class="card p-3 mb-4">
         <div class="card-body">
-            <h3 class="card-title">💾 Import New Tool</h3>
-            <form asp-action="ImportTool" method="post" enctype="multipart/form-data">
+            <h3 class="card-title">📥 Import Tool to Manager</h3>
+            <form asp-action="ImportTool" asp-controller="Tool" method="post" enctype="multipart/form-data">
                 <div class="mb-3">
-                    <label for="dllFile" class="form-label">Select .dll file:</label>
-                    <input type="file" name="dllFile" class="form-control" accept=".dll" />
+                    <label for="managerDllFile" class="form-label">Upload Tool .dll:</label>
+                    <input type="file" name="dllFile" id="managerDllFile" class="form-control" accept=".dll" required />
                 </div>
-                <button type="submit" class="btn btn-pink">Import Tool</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Filter/Search Section -->
-    <div class="card p-3 mb-4">
-        <div class="card-body">
-            <h3 class="card-title">🔍 Search & Filter</h3>
-            <form method="get" asp-action="Index" class="row g-3">
-                <div class="col-md-6">
-                    <label for="searchTerm" class="form-label">Search:</label>
-                    <input type="text" name="searchTerm" id="searchTerm" class="form-control" placeholder="Enter tool name" value="@ViewBag.SearchTerm" />
+                <div class="mb-3">
+                    <label for="toolCategory" class="form-label">Tool Category:</label>
+                    <input type="text" name="toolCategory" id="toolCategory" class="form-control" placeholder="Enter category" />
                 </div>
-                <div class="col-md-6">
-                    <label for="categoryFilter" class="form-label">Category:</label>
-                    <select name="categoryFilter" id="categoryFilter" class="form-select">
-                        <option value="">All</option>
-                        @foreach (var category in Model.Select(t => t.Category).Distinct())
-                        {
-                            <option value="@category" selected="@(ViewBag.CategoryFilter == category ? "selected" : null)">@category</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-12 text-center">
-                    <button type="submit" class="btn btn-outline-secondary rounded-pill px-4">Filter</button>
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-pink">Import to Manager</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary rounded-pill">Back to Tools</a>
                 </div>
             </form>
         </div>
@@ -157,15 +140,14 @@
             </table>
         </div>
 
-        <p class="mt-3 text-muted text-center">Showing @Model.Count tools.</p>
+        <p class="mt-3 text-muted text-center">Managing @Model.Count tools.</p>
     }
     else
     {
-        <p class="text-muted text-center">No tools available.</p>
+        <p class="text-muted text-center">No tools available in manager.</p>
     }
 </div>
 
-<!-- JavaScript for AJAX -->
 @section Scripts {
     <script>
         function togglePremium(toolName, element) {

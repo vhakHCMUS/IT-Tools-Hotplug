@@ -91,10 +91,12 @@
         </div>
     }
 
+    @* Commented out Import Tool section
     <form asp-action="ImportTool" method="post" enctype="multipart/form-data" class="mb-4">
         <input type="file" name="dllFile" accept=".dll" class="form-control d-inline-block w-auto" />
         <button type="submit" class="btn btn-primary">Import Tool</button>
     </form>
+    *@
 
     <h2>Available Tools</h2>
     @if (Model != null && Model.Any())

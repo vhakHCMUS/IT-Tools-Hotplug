@@ -116,7 +116,6 @@ public class ToolController : Controller
         return View(tools);
     }
 
-    // New LikedTools action placed here
     [Authorize]
     [HttpGet]
     [Route("tool/likedtools")]
@@ -127,7 +126,7 @@ public class ToolController : Controller
     }
 
     [HttpPost]
-    public IActionResult ImportTool(IFormFile dllFile)
+    public IActionResult ImportTool(IFormFile dllFile, string toolCategory = null)
     {
         if (dllFile != null && dllFile.Length > 0)
         {
@@ -137,9 +136,24 @@ public class ToolController : Controller
             {
                 dllFile.CopyTo(stream);
             }
-            _logger.LogInformation($"Imported tool from {dllFile.FileName} (not fully implemented in original ToolService)");
+
+            // Optional: Add the tool to database with category
+            if (!string.IsNullOrEmpty(toolCategory))
+            {
+                var tool = new Tool
+                {
+                    Name = Path.GetFileNameWithoutExtension(dllFile.FileName),
+                    Category = toolCategory,
+                    CreatedAt = DateTime.Now,
+                    IsAvailable = true
+                };
+                _dbContext.Tools.Add(tool);
+                _dbContext.SaveChanges();
+            }
+
+            _logger.LogInformation($"Imported tool from {dllFile.FileName} with category {toolCategory}");
         }
-        return RedirectToAction("Index");
+        return RedirectToAction("ToolManager");
     }
 
     [HttpPost]
@@ -190,7 +204,14 @@ public class ToolController : Controller
     public async Task<IActionResult> ToolManager()
     {
         var tools = await _toolRepository.GetAllAsync();
-        ViewData["Tools"] = tools;
-        return View("~/Views/Tool/ToolManager.cshtml", tools);
+        if (tools == null || !tools.Any())
+        {
+            _logger.LogWarning("No tools retrieved from ToolManager.");
+        }
+        else
+        {
+            _logger.LogInformation($"Retrieved tools for ToolManager.");
+        }
+        return View(tools); // Uses default view "ToolManager.cshtml"
     }
 }
