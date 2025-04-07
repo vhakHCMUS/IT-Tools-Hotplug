@@ -93,7 +93,7 @@
             background-color: #ffffff;
             border: 2px solid var(--border-soft);
             border-radius: 16px;
-            box-shadow: 2px 4px 10px rgba(255 your182, 193, 0.2);
+            box-shadow: 2px 4px 10px rgba(255, 182, 193, 0.2);
             transition: transform 0.2s;
         }
 
@@ -114,6 +114,50 @@
                 background-color: #ff5c8e;
                 border-color: #ff5c8e;
             }
+
+        /* User profile button styles */
+        .user-profile-btn {
+            display: flex;
+            align-items: center;
+            background-color: var(--secondary-pink);
+            border: 1px solid var(--accent-rose);
+            border-radius: 50px;
+            padding: 8px 16px;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+        }
+
+            .user-profile-btn:hover {
+                background-color: var(--accent-rose);
+                color: white;
+            }
+
+            .user-profile-btn i {
+                margin-right: 8px;
+                font-size: 1.2em;
+            }
+
+        /* Dropdown menu styling */
+        .user-dropdown .dropdown-menu {
+            border-radius: 12px;
+            border: 1px solid var(--border-soft);
+            box-shadow: 0 4px 8px rgba(255, 182, 193, 0.3);
+            overflow: hidden;
+        }
+
+        .user-dropdown .dropdown-item {
+            color: var(--text-dark);
+            padding: 10px 20px;
+            transition: background-color 0.2s;
+        }
+
+            .user-dropdown .dropdown-item:hover {
+                background-color: var(--secondary-pink);
+            }
+
+        .user-dropdown .dropdown-divider {
+            border-color: var(--border-soft);
+        }
     </style>
 </head>
 <body>
@@ -149,6 +193,32 @@
                             </li>
                         }
                     </ul>
+
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <div class="user-dropdown dropdown ms-3">
+                            <button class="user-profile-btn dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle"></i>
+                                @User.Identity.Name
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" asp-controller="User" asp-action="Profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                                        <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex">
+                            <a class="btn btn-primary me-2" asp-area="Identity" asp-page="/Account/Login">Login</a>
+                            <a class="btn btn-outline-primary" asp-area="Identity" asp-page="/Account/Register">Register</a>
+                        </div>
+                    }
                 </div>
             </div>
         </nav>

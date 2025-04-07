@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TKPM_Project.Models;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace TKPM_Project.Controllers
 {
-    [Authorize(Roles = "Admin")]
     public class UserController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -21,7 +21,8 @@ namespace TKPM_Project.Controllers
             _roleManager = roleManager;
         }
 
-        // GET: Hiển thị danh sách người dùng
+        // Admin methods with [Authorize] attribute
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UserManager()
         {
             var users = await _userManager.Users.ToListAsync();
@@ -43,6 +44,7 @@ namespace TKPM_Project.Controllers
             return View(userRolesViewModel);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> Edit(string id)
         {
@@ -58,26 +60,23 @@ namespace TKPM_Project.Controllers
             }
 
             var userRoles = await _userManager.GetRolesAsync(user);
-            var allRoles = await _roleManager.Roles
-                .Select(r => r.Name)
-                .Where(r => !string.IsNullOrEmpty(r)) // Lọc bỏ null hoặc chuỗi rỗng
-                .ToListAsync();
+            var allRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
 
             var model = new EditUserViewModel
             {
                 UserId = user.Id,
                 UserName = user.UserName,
                 Email = user.Email,
-                FullName = user.FullName ?? string.Empty,
+                FullName = user.FullName,
                 Roles = userRoles.ToList(),
                 AllRoles = allRoles,
-                SelectedRoles = userRoles.ToArray()
+                SelectedRoles = userRoles.ToArray() // Initialize with current roles
             };
 
             return View(model);
         }
 
-        // POST: Xử lý cập nhật thông tin người dùng
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditUserViewModel model)
@@ -85,7 +84,6 @@ namespace TKPM_Project.Controllers
             if (!ModelState.IsValid)
             {
                 model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
-                model.SelectedRoles = model.SelectedRoles ?? Array.Empty<string>();
                 return View(model);
             }
 
@@ -98,7 +96,7 @@ namespace TKPM_Project.Controllers
             // Cập nhật thông tin người dùng
             user.UserName = model.UserName;
             user.Email = model.Email;
-            user.FullName = model.FullName ?? string.Empty;
+            user.FullName = model.FullName;
 
             var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
@@ -108,32 +106,17 @@ namespace TKPM_Project.Controllers
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
                 model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
-                model.SelectedRoles = model.SelectedRoles ?? Array.Empty<string>();
                 return View(model);
             }
 
             // Cập nhật vai trò
             var currentRoles = await _userManager.GetRolesAsync(user);
-            var selectedRoles = (model.SelectedRoles ?? Array.Empty<string>())
-                .Where(r => !string.IsNullOrEmpty(r)) // Lọc bỏ null hoặc chuỗi rỗng
-                .ToArray();
-            var rolesToAdd = selectedRoles.Except(currentRoles).ToList();
-            var rolesToRemove = currentRoles.Except(selectedRoles).ToList();
 
-            if (rolesToRemove.Any())
-            {
-                var removeResult = await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
-                if (!removeResult.Succeeded)
-                {
-                    foreach (var error in removeResult.Errors)
-                    {
-                        ModelState.AddModelError(string.Empty, error.Description);
-                    }
-                    model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
-                    model.SelectedRoles = selectedRoles;
-                    return View(model);
-                }
-            }
+            // Handle null SelectedRoles (no checkboxes selected)
+            var selectedRoles = model.SelectedRoles ?? new string[0];
+
+            var rolesToAdd = selectedRoles.Where(r => !currentRoles.Contains(r)).ToList();
+            var rolesToRemove = currentRoles.Where(r => !selectedRoles.Contains(r)).ToList();
 
             if (rolesToAdd.Any())
             {
@@ -145,16 +128,93 @@ namespace TKPM_Project.Controllers
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
                     model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
-                    model.SelectedRoles = selectedRoles;
+                    return View(model);
+                }
+            }
+
+            if (rolesToRemove.Any())
+            {
+                var removeResult = await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
+                if (!removeResult.Succeeded)
+                {
+                    foreach (var error in removeResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
                     return View(model);
                 }
             }
 
             return RedirectToAction(nameof(UserManager));
         }
+
+        // User profile methods - accessible to authenticated users
+        [Authorize]
+        public async Task<IActionResult> Profile()
+        {
+            // Get current user
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var model = new ProfileViewModel
+            {
+                Email = user.Email,
+                FullName = user.FullName
+            };
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Profile(ProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Get current user
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Update only allowed fields
+            user.Email = model.Email;
+            user.FullName = model.FullName;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return View(model);
+            }
+
+            // Update normalized email if email changed
+            await _userManager.UpdateNormalizedEmailAsync(user);
+
+            // Add success message
+            TempData["StatusMessage"] = "Your profile has been updated successfully!";
+
+            return RedirectToAction(nameof(Profile));
+        }
     }
 
-    // ViewModel cho danh sách người dùng
     public class UserRolesViewModel
     {
         public string UserId { get; set; }
@@ -164,15 +224,20 @@ namespace TKPM_Project.Controllers
         public IList<string> Roles { get; set; }
     }
 
-    // ViewModel cho chỉnh sửa người dùng
     public class EditUserViewModel
     {
         public string UserId { get; set; }
         public string UserName { get; set; }
         public string Email { get; set; }
         public string FullName { get; set; }
-        public List<string> Roles { get; set; } = new List<string>(); // Khởi tạo mặc định
-        public List<string> AllRoles { get; set; } = new List<string>(); // Khởi tạo mặc định
-        public string[] SelectedRoles { get; set; } // Vai trò được chọn từ form
+        public List<string> Roles { get; set; } = new List<string>();
+        public List<string> AllRoles { get; set; }
+        public string[] SelectedRoles { get; set; }
+    }
+
+    public class ProfileViewModel
+    {
+        public string Email { get; set; }
+        public string FullName { get; set; }
     }
 }
