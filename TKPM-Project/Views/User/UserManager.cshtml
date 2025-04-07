@@ -1,0 +1,30 @@
+﻿@model IEnumerable<TKPM_Project.Controllers.UserRolesViewModel>
+
+<h2>User Manager</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Full Name</th>
+            <th>Roles</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.UserName</td>
+                <td>@user.Email</td>
+                <td>@user.FullName</td>
+                <td>@string.Join(", ", user.Roles)</td> <!-- Hiển thị vai trò, cách nhau bởi dấu phẩy -->
+                <td>
+                    <a asp-action="Edit" asp-route-id="@user.UserId" class="btn btn-primary">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@user.UserId" class="btn btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

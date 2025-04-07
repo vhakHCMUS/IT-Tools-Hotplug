@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-public class ApplicationUser : IdentityUser
+namespace TKPM_Project.Models
 {
-    public string FullName { get; set; } = string.Empty;
+    public class ApplicationUser : IdentityUser
+    {
+        public string FullName { get; set; } = string.Empty;
+    }
 }
