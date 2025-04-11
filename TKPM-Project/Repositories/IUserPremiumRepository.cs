@@ -9,6 +9,8 @@ namespace TKPM_Project.Repositories
         Task<bool> IsPremiumActiveAsync(string userId);
         Task RemoveExpiredAsync();
         Task<List<UserPremium>> GetAllExpiredAsync();
+        Task<List<UserPremium>> GetAllActiveAsync();
+
 
     }
 

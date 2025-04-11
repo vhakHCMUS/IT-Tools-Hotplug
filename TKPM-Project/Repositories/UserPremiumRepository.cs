@@ -45,6 +45,14 @@ namespace TKPM_Project.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<UserPremium>> GetAllActiveAsync()
+        {
+            return await _context.UserPremiums
+                .Where(x => x.ExpireDate > DateTime.UtcNow)
+                .Include(x => x.User) // cần Include để lấy Username
+                .ToListAsync();
+        }
+
     }
 
 }

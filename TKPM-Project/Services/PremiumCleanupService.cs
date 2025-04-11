@@ -35,8 +35,6 @@ public class PremiumCleanupService : BackgroundService
                         }
                     }
                 }
-
-                await premiumRepo.RemoveExpiredAsync();
             }
 
             await Task.Delay(TimeSpan.FromHours(1), stoppingToken); // Chạy mỗi giờ

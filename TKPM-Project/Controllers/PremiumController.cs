@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TKPM_Project.Models;
 using TKPM_Project.Repositories;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace TKPM_Project.Controllers
 {
@@ -58,23 +60,22 @@ namespace TKPM_Project.Controllers
             });
         }
 
-        // (Optional) Admin xem danh sách user còn Premium
-        //[HttpGet("all")]
+        [HttpGet("all")]
         //[Authorize(Roles = "Admin")]
-        //public IActionResult GetAllActivePremiums()
-        //{
-        //    var users = _premiumRepo
-        //        .GetAll()
-        //        .Where(x => x.ExpireDate > DateTime.UtcNow)
-        //        .Select(x => new
-        //        {
-        //            x.UserId,
-        //            x.User.UserName,
-        //            x.StartDate,
-        //            x.ExpireDate
-        //        });
+        public async Task<IActionResult> GetAllActivePremiums()
+        {
+            var users = await _premiumRepo.GetAllActiveAsync();
 
-        //    return Ok(users);
-        //}
+            var result = users.Select(x => new
+            {
+                x.UserId,
+                Username = x.User.UserName,
+                x.StartDate,
+                x.ExpireDate
+            });
+
+            return Ok(result);
+        }
+
     }
 }
