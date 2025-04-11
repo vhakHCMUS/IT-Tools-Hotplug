@@ -10,6 +10,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public DbSet<Tool> Tools { get; set; }
     public DbSet<UserLikedTool> UserLikedTools { get; set; }
+    public DbSet<UserPremium> UserPremiums { get; set; }
 
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
@@ -60,6 +61,17 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .WithMany()
             .HasForeignKey(ult => ult.ToolId);
 
+        modelBuilder.Entity<UserPremium>()
+    .HasKey(up => up.Id);
+
+        modelBuilder.Entity<UserPremium>()
+            .HasOne(up => up.User)
+            .WithMany()
+            .HasForeignKey(up => up.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserPremium>()
+            .HasIndex(up => up.ExpireDate); // Index để dễ truy vấn expire
 
 
         modelBuilder.Entity<IdentityRole>().HasData(roles);

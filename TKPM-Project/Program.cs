@@ -48,6 +48,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IToolRepository, ToolRepository>();
 builder.Services.AddScoped<IUserLikedToolRepository, UserLikedToolRepository>();
+builder.Services.AddScoped<IUserPremiumRepository, UserPremiumRepository>();
 
 var app = builder.Build();
 
