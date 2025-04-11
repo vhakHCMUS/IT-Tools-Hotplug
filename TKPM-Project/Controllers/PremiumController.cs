@@ -40,7 +40,7 @@ namespace TKPM_Project.Controllers
             };
 
             await _premiumRepo.AddAsync(premium);
-            await _userManager.RemoveFromRolesAsync(user, await _userManager.GetRolesAsync(user));
+            //await _userManager.RemoveFromRolesAsync(user, await _userManager.GetRolesAsync(user)); Không xóa role cũ
             await _userManager.AddToRoleAsync(user, "Premium");
 
             return Ok("Bạn đã được cấp quyền Premium trong 7 ngày.");

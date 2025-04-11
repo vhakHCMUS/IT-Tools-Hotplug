@@ -35,7 +35,10 @@ namespace TKPM_Project.Controllers
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
-                return Ok(new { message = "User created successfully" });
+            {
+                await _userManager.AddToRoleAsync(user, "User");
+                return Ok(new { message = "User created successfully with User role" });
+            }
 
             return BadRequest(result.Errors);
         }
