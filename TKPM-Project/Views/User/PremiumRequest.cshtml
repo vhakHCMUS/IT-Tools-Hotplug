@@ -1,0 +1,108 @@
+@model TKPM_Project.Controllers.PremiumRequestViewModel
+@{
+    ViewData["Title"] = "Premium Request";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h2 class="card-title mb-4">Premium Membership</h2>
+                    
+                    @if (ViewBag.Success == true)
+                    {
+                        <div class="alert alert-success animate__animated animate__fadeIn">
+                            <i class="bi bi-check-circle-fill me-2"></i> @ViewBag.Message
+                        </div>
+                        <div class="text-center mt-4">
+                            <a asp-controller="Tool" asp-action="Tools" class="btn btn-primary">
+                                <i class="bi bi-tools me-2"></i>Explore Premium Tools
+                            </a>
+                        </div>
+                    }
+                    else if (User.IsInRole("Premium"))
+                    {
+                        <div class="alert alert-info animate__animated animate__fadeIn">
+                            <i class="bi bi-info-circle-fill me-2"></i> @ViewBag.Message
+                        </div>
+                        <div class="text-center mt-4">
+                            <a asp-controller="Tool" asp-action="Tools" class="btn btn-primary">
+                                <i class="bi bi-tools me-2"></i>Explore Premium Tools
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="premium-info mb-4">
+                            <div class="premium-badge-large mb-3">
+                                <i class="bi bi-trophy-fill"></i> Premium
+                            </div>
+                            <p>Get access to exclusive premium tools and features!</p>
+                            <ul class="text-start list-group list-group-flush mb-4">
+                                <li class="list-group-item"><i class="bi bi-check-circle-fill text-success me-2"></i> Access to all premium tools</li>
+                                <li class="list-group-item"><i class="bi bi-check-circle-fill text-success me-2"></i> Priority support</li>
+                                <li class="list-group-item"><i class="bi bi-check-circle-fill text-success me-2"></i> Ad-free experience</li>
+                            </ul>
+                        </div>
+                        
+                        <form asp-action="PremiumRequest" method="post" class="premium-form">
+                            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                            
+                            <div class="form-floating mb-3">
+                                <input asp-for="Password" class="form-control" placeholder="Enter Premium Password" />
+                                <label asp-for="Password">Enter Premium Password</label>
+                                <span asp-validation-for="Password" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-unlock-fill me-2"></i>Unlock Premium
+                                </button>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .premium-badge-large {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 30px;
+        background: linear-gradient(135deg, #ffd700, #ffec8b);
+        color: #8b6508;
+        font-weight: bold;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
+        animation: glow 1.5s infinite alternate;
+    }
+
+    @@keyframes glow {
+        0% {
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        100% {
+            box-shadow: 0 0 20px rgba(255, 215, 0, 1);
+        }
+    }
+
+    .premium-info {
+        padding: 20px;
+        background-color: rgba(255, 215, 0, 0.1);
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .premium-form {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+</style>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

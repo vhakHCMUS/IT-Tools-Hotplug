@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 
 namespace TKPM_Project.Controllers
 {
@@ -14,11 +15,13 @@ namespace TKPM_Project.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public UserController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public UserController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, SignInManager<ApplicationUser> signInManager)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _signInManager = signInManager;
         }
 
         // Admin methods with [Authorize] attribute
@@ -213,6 +216,88 @@ namespace TKPM_Project.Controllers
 
             return RedirectToAction(nameof(Profile));
         }
+
+        // Premium Request methods
+        [Authorize]
+        public async Task<IActionResult> PremiumRequest()
+        {
+            // Get current user
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Check if user is already premium - check directly from the database
+            var userRoles = await _userManager.GetRolesAsync(user);
+            if (userRoles.Contains("Premium"))
+            {
+                ViewBag.Message = "You already have Premium status!";
+                return View();
+            }
+
+            return View();
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PremiumRequest(PremiumRequestViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Get current user
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Check if user is already premium
+            var userRoles = await _userManager.GetRolesAsync(user);
+            if (userRoles.Contains("Premium"))
+            {
+                ViewBag.Message = "You already have Premium status!";
+                return View();
+            }
+
+            // Verify the premium password
+            if (model.Password == "123456")
+            {
+                // Add user to Premium role
+                var result = await _userManager.AddToRoleAsync(user, "Premium");
+                
+                if (result.Succeeded)
+                {
+                    // Re-sign in the user to refresh their claims/roles
+                    await _signInManager.SignOutAsync();
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    
+                    ViewBag.Success = true;
+                    ViewBag.Message = "Congratulations! You are now a Premium user!";
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                }
+            }
+            else
+            {
+                ModelState.AddModelError("Password", "Incorrect password. Please try again.");
+            }
+
+            return View(model);
+        }
     }
 
     public class UserRolesViewModel
@@ -239,5 +324,10 @@ namespace TKPM_Project.Controllers
     {
         public string Email { get; set; }
         public string FullName { get; set; }
+    }
+
+    public class PremiumRequestViewModel
+    {
+        public string Password { get; set; }
     }
 }

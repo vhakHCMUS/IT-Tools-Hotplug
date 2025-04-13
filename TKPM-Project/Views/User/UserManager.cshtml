@@ -1,30 +1,345 @@
 ﻿@model IEnumerable<TKPM_Project.Controllers.UserRolesViewModel>
 
-<h2>User Manager</h2>
+@{
+    ViewData["Title"] = "User Manager";
+}
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Full Name</th>
-            <th>Roles</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var user in Model)
-        {
-            <tr>
-                <td>@user.UserName</td>
-                <td>@user.Email</td>
-                <td>@user.FullName</td>
-                <td>@string.Join(", ", user.Roles)</td> <!-- Hiển thị vai trò, cách nhau bởi dấu phẩy -->
-                <td>
-                    <a asp-action="Edit" asp-route-id="@user.UserId" class="btn btn-primary">Edit</a>
-                    <a asp-action="Delete" asp-route-id="@user.UserId" class="btn btn-danger">Delete</a>
-                </td>
-            </tr>
+<style>
+    :root {
+        --primary-pink: #ffb6c1;
+        --secondary-pink: #f8c8dc;
+        --accent-rose: #ff91a4;
+        --background-light: #fff0f5;
+        --text-dark: #6a0572;
+        --border-soft: #ffdde1;
+        --success-green: #28a745;
+        --danger-red: #dc3545;
+        --info-blue: #17a2b8;
+    }
+
+    .page-title {
+        font-weight: 700;
+        background: linear-gradient(to right, var(--text-dark), var(--accent-rose));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-fill-color: transparent;
+        margin-bottom: 1.5rem;
+    }
+
+    .card {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 5px 15px rgba(255, 182, 193, 0.15);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .card:hover {
+        box-shadow: 0 8px 20px rgba(255, 182, 193, 0.25);
+        transform: translateY(-3px);
+    }
+
+    .card-header {
+        background-color: var(--secondary-pink);
+        color: var(--text-dark);
+        border-bottom: none;
+        font-weight: 600;
+        padding: 1.25rem;
+    }
+
+    .icon-title {
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .user-table {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(255, 182, 193, 0.1);
+    }
+
+    .user-table thead {
+        background: linear-gradient(to right, var(--secondary-pink), var(--primary-pink));
+        color: var(--text-dark);
+    }
+
+    .user-table th {
+        font-weight: 600;
+        border: none;
+        padding: 1rem;
+    }
+
+    .user-table td {
+        vertical-align: middle;
+        padding: 0.75rem 1rem;
+        border-color: #f9f0f2;
+    }
+
+    .user-table tr:hover {
+        background-color: rgba(255, 182, 193, 0.05);
+    }
+
+    .action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 0.15rem;
+        transition: all 0.3s ease;
+        background: white;
+        color: var(--text-dark);
+        border: 2px solid;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .action-btn.edit {
+        border-color: var(--info-blue);
+        color: var(--info-blue);
+    }
+
+    .action-btn.edit:hover {
+        background-color: var(--info-blue);
+        color: white;
+    }
+
+    .action-btn.delete {
+        border-color: var(--danger-red);
+        color: var(--danger-red);
+    }
+
+    .action-btn.delete:hover {
+        background-color: var(--danger-red);
+        color: white;
+    }
+
+    .user-count {
+        color: var(--accent-rose);
+        font-weight: 600;
+    }
+
+    .role-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin: 0.1rem;
+    }
+
+    .role-badge.admin {
+        background-color: #ffc107;
+        color: #856404;
+    }
+
+    .role-badge.premium {
+        background-color: #ffd700;
+        color: #856404;
+    }
+
+    .role-badge.user {
+        background-color: var(--secondary-pink);
+        color: var(--text-dark);
+    }
+
+    .role-badge.other {
+        background-color: #e2e3e5;
+        color: #383d41;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--secondary-pink);
+        color: var(--text-dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin-right: 0.75rem;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .user-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .user-email {
+        font-size: 0.75rem;
+        color: #666;
+    }
+</style>
+
+<div class="container mt-4">
+    <h1 class="text-center page-title">
+        <i class="bi bi-people-fill me-2"></i>User Manager
+    </h1>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="icon-title">
+                    <i class="bi bi-person-lines-fill"></i>
+                    <span>Manage Users</span>
+                </div>
+                <span class="badge bg-light text-dark">
+                    <i class="bi bi-person-fill"></i> <span class="user-count">@Model.Count()</span> Users
+                </span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover user-table mb-0">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-person me-2"></i>User</th>
+                                <th><i class="bi bi-card-text me-2"></i>Full Name</th>
+                                <th><i class="bi bi-key-fill me-2"></i>Roles</th>
+                                <th class="text-center"><i class="bi bi-sliders me-2"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="user-info">
+                                            <div class="user-avatar">
+                                                @if (!string.IsNullOrEmpty(user.UserName))
+                                                {
+                                                    @user.UserName.Substring(0, 1).ToUpper()
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-person"></i>
+                                                }
+                                            </div>
+                                            <div>
+                                                <div class="user-name">@user.UserName</div>
+                                                <div class="user-email">@user.Email</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(user.FullName))
+                                        {
+                                            @user.FullName
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Not specified</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @foreach (var role in user.Roles)
+                                        {
+                                            @if (role == "Admin")
+                                            {
+                                                <span class="role-badge admin">
+                                                    <i class="bi bi-shield-fill-check me-1"></i>Admin
+                                                </span>
+                                            }
+                                            else if (role == "Premium")
+                                            {
+                                                <span class="role-badge premium">
+                                                    <i class="bi bi-trophy-fill me-1"></i>Premium
+                                                </span>
+                                            }
+                                            else if (role == "User")
+                                            {
+                                                <span class="role-badge user">
+                                                    <i class="bi bi-person-fill me-1"></i>User
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="role-badge other">
+                                                    <i class="bi bi-person-badge me-1"></i>@role
+                                                </span>
+                                            }
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <a asp-action="Edit" asp-route-id="@user.UserId"
+                                           class="action-btn edit" data-bs-toggle="tooltip" title="Edit User">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </a>
+                                        <button type="button" class="action-btn delete"
+                                                onclick="confirmDelete('@user.UserId', '@user.UserName')"
+                                                data-bs-toggle="tooltip" title="Delete User">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="p-5 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-exclamation-circle" style="font-size: 3rem; color: var(--accent-rose);"></i>
+                    </div>
+                    <h4>No Users Found</h4>
+                    <p class="text-muted">There are no users available in the system.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm User Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete user <strong id="userNameToDelete"></strong>?</p>
+                <p class="text-danger">This action cannot be undone!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a id="deleteUserLink" href="#" class="btn btn-danger">Delete User</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+        });
+
+        function confirmDelete(userId, userName) {
+            document.getElementById('userNameToDelete').textContent = userName;
+            document.getElementById('deleteUserLink').href = '/User/Delete?id=' + userId;
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
         }
-    </tbody>
-</table>
+    </script>
+}

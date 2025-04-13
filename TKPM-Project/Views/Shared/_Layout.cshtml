@@ -358,11 +358,10 @@
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                 <li><a class="dropdown-item" asp-controller="User" asp-action="Profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
+                                <li><a class="dropdown-item" asp-controller="User" asp-action="PremiumRequest"><i class="bi bi-trophy me-2"></i>@(User.IsInRole("Premium") ? "Premium Status" : "Get Premium")</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                                        <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
-                                    </form>
+                                    <button type="button" class="dropdown-item" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
                                 </li>
                             </ul>
                         </div>
@@ -370,8 +369,8 @@
                     else
                     {
                         <div class="d-flex gap-2">
-                            <a class="btn btn-primary" asp-area="Identity" asp-page="/Account/Login">Login</a>
-                            <a class="btn btn-outline-primary" asp-area="Identity" asp-page="/Account/Register">Register</a>
+                            <a class="btn btn-primary" asp-controller="Account" asp-action="Login">Login</a>
+                            <a class="btn btn-outline-primary" asp-controller="Account" asp-action="Register">Register</a>
                         </div>
                     }
                 </div>
@@ -404,6 +403,15 @@
                 header.classList.remove('scrolled');
             }
         });
+
+        async function logout() {
+            const response = await fetch('/api/auth/logout', { method: 'POST' });
+            if (response.ok) {
+                window.location.href = "/";
+            } else {
+                alert("Logout failed");
+            }
+        }
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

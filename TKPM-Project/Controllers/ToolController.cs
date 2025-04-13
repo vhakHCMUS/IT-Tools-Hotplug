@@ -212,6 +212,8 @@ namespace TKPM_Project.Controllers
         {
             try
             {
+                _logger.LogInformation($"SearchTools called with name: {name}, category: {category}, premium: {premium}");
+                
                 if (_dbContext == null || _dbContext.Tools == null)
                 {
                     _logger.LogError("Database context or Tools DbSet is null");
@@ -230,7 +232,14 @@ namespace TKPM_Project.Controllers
                     toolsQuery = toolsQuery.Where(t => t.Category != null && t.Category == category);
                 }
 
-                if (!string.IsNullOrEmpty(premium) && bool.TryParse(premium, out bool isPremium))
+                // Check if user is authenticated before applying premium filter
+                // Anonymous users should only see non-premium tools
+                if (!User.Identity.IsAuthenticated)
+                {
+                    toolsQuery = toolsQuery.Where(t => !t.IsPremium);
+                    _logger.LogInformation("User not authenticated, filtering out premium tools");
+                }
+                else if (!string.IsNullOrEmpty(premium) && bool.TryParse(premium, out bool isPremium))
                 {
                     toolsQuery = toolsQuery.Where(t => t.IsPremium == isPremium);
                 }

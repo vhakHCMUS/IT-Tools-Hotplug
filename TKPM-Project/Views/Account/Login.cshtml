@@ -1,35 +1,184 @@
-﻿<h1>LOGIN</h1>
-<form id="loginForm">
-    <div class="mb-3">
-        <label for="Username" class="form-label">Username</label>
-        <input type="text" class="form-control" id="Username" required />
-    </div>
+﻿@{
+    ViewData["Title"] = "Login";
+}
 
-    <div class="mb-3">
-        <label for="Password" class="form-label">Password</label>
-        <input type="password" class="form-control" id="Password" required />
-    </div>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm animate__animated animate__fadeIn">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h1 class="display-6 fw-bold text-gradient">Welcome Back</h1>
+                        <p class="text-muted">Sign in to continue to your account</p>
+                    </div>
+                    
+                    <div id="notification-container" class="mb-4" style="display: none;"></div>
+                    
+                    <form id="loginForm">
+                        <div class="form-floating mb-4">
+                            <input type="text" class="form-control custom-input" id="Username" placeholder="Username" required />
+                            <label for="Username"><i class="bi bi-person me-2"></i>Username</label>
+                        </div>
 
-    <button type="button" class="btn btn-primary w-100" onclick="login()">Login</button>
-</form>
+                        <div class="form-floating mb-4">
+                            <input type="password" class="form-control custom-input" id="Password" placeholder="Password" required />
+                            <label for="Password"><i class="bi bi-lock me-2"></i>Password</label>
+                        </div>
+
+                        <button type="button" class="btn btn-primary btn-lg w-100 custom-button" onclick="login()">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                        </button>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <p>Don't have an account? <a href="/Account/Register" class="text-decoration-none fw-bold">Sign Up</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-pink: #ffb6c1;
+        --secondary-pink: #f8c8dc;
+        --accent-rose: #ff91a4;
+        --background-light: #fff0f5;
+        --text-dark: #6a0572;
+        --border-soft: #ffdde1;
+    }
+    
+    .text-gradient {
+        background: linear-gradient(to right, var(--text-dark), var(--accent-rose));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-fill-color: transparent;
+    }
+    
+    .custom-input {
+        border: 2px solid var(--border-soft);
+        border-radius: 10px;
+        padding: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .custom-input:focus {
+        border-color: var(--accent-rose);
+        box-shadow: 0 0 0 0.2rem rgba(255, 145, 164, 0.25);
+    }
+    
+    .custom-button {
+        background-color: var(--accent-rose);
+        border-color: var(--accent-rose);
+        border-radius: 10px;
+        padding: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+    
+    .custom-button:hover, .custom-button:focus {
+        background-color: #ff7a94;
+        border-color: #ff7a94;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(255, 145, 164, 0.3);
+    }
+    
+    .notification {
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    .notification-success {
+        background-color: rgba(223, 240, 216, 0.7);
+        border-left: 5px solid #5cb85c;
+        color: #3c763d;
+    }
+    
+    .notification-error {
+        background-color: rgba(255, 220, 224, 0.7);
+        border-left: 5px solid var(--accent-rose);
+        color: #a94442;
+    }
+    
+    .notification i {
+        font-size: 1.5rem;
+        margin-right: 15px;
+    }
+    
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
 
 <script>
-    async function login() {
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: document.getElementById('Username').value,
-                password: document.getElementById('Password').value
-            })
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-            alert("Login successful");
-            window.location.href = "/Home/Index";
-        } else {
-            alert("Login failed: " + data.message);
+    function showNotification(message, type) {
+        const container = document.getElementById('notification-container');
+        container.style.display = 'block';
+        
+        const icon = type === 'success' 
+            ? '<i class="bi bi-check-circle-fill"></i>' 
+            : '<i class="bi bi-exclamation-circle-fill"></i>';
+            
+        container.innerHTML = `
+            <div class="notification notification-${type}">
+                ${icon}
+                <span>${message}</span>
+            </div>
+        `;
+        
+        // Auto hide after 5 seconds for success notifications
+        if (type === 'success') {
+            setTimeout(() => {
+                container.style.display = 'none';
+            }, 5000);
         }
     }
+
+    async function login() {
+        try {
+            const username = document.getElementById('Username').value;
+            const password = document.getElementById('Password').value;
+            
+            if (!username || !password) {
+                showNotification('Please enter both username and password', 'error');
+                return;
+            }
+            
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                showNotification('Login successful! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.href = "/Home/Index";
+                }, 1500);
+            } else {
+                showNotification(data.message || 'Login failed. Please check your credentials.', 'error');
+            }
+        } catch (error) {
+            showNotification('An error occurred while logging in. Please try again.', 'error');
+            console.error('Login error:', error);
+        }
+    }
+    
+    // Allow pressing Enter to submit the form
+    document.getElementById('loginForm').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            login();
+        }
+    });
 </script>

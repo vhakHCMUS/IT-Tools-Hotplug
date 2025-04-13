@@ -133,6 +133,125 @@
     </div>
 </div>
 
+@* Move shared script outside of the authenticated user check *@
+<script>
+    document.getElementById('searchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        searchTools();
+    });
+
+    document.getElementById('searchName').addEventListener('input', debounce(searchTools, 300));
+    document.getElementById('searchCategory').addEventListener('change', searchTools);
+    document.getElementById('searchPremium').addEventListener('change', searchTools);
+
+    async function searchTools() {
+        const searchName = document.getElementById('searchName').value;
+        const searchCategory = document.getElementById('searchCategory').value;
+        const searchPremium = document.getElementById('searchPremium').value;
+
+        try {
+            const response = await fetch('/Tool/SearchTools?' + new URLSearchParams({
+                name: searchName,
+                category: searchCategory,
+                premium: searchPremium
+            }), {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Search request failed: ${response.status} - ${errorText}`);
+            }
+
+            const tools = await response.json();
+            updateToolsDisplay(tools);
+        } catch (error) {
+            console.error('Error searching tools:', error);
+            document.getElementById('toolsContainer').innerHTML =
+                `<p class="text-danger">Error loading tools: ${error.message}. Please try again.</p>`;
+        }
+    }
+
+    function updateToolsDisplay(tools) {
+        const toolsContainer = document.getElementById('toolsContainer');
+        if (!toolsContainer) return;
+
+        if (tools.length === 0) {
+            toolsContainer.innerHTML = '<p>No tools found matching your criteria.</p>';
+            return;
+        }
+
+        let html = '<div class="row row-cols-1 row-cols-md-3 g-4" id="toolsList">';
+        tools.forEach(tool => {
+            const premiumClass = tool.isPremium ? 'premium-card' : '';
+            let heartIcon = '';
+            
+            if (@User.Identity.IsAuthenticated.ToString().ToLower()) {
+                heartIcon = `<i class="bi bi-heart" data-tool-id="${tool.id}" onclick="toggleLike(${tool.id}, this)"></i>`;
+            } else {
+                heartIcon = `<i class="bi bi-heart"></i>`;
+            }
+            
+            html += `
+                <div class="col">
+                    <div class="card h-100 shadow-sm ${premiumClass}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">${tool.name}</h5>
+                                ${heartIcon}
+                            </div>
+                            <p class="card-text text-muted small mt-2">${tool.description || ''}</p>
+                            <p class="card-text text-muted small">
+                                <strong>Category:</strong> ${tool.category || 'N/A'}<br />
+                                <strong>Premium:</strong> ${tool.isPremium ? 'Yes' : 'No'}
+                            </p>
+                            <div class="d-flex justify-content-between">
+                                <a href="/Tool/Detail?toolName=${tool.name}"
+                                   class="btn btn-primary btn-sm">View Details</a>
+                                @if (User.IsInRole("Admin"))
+                                {
+                                <form action="/Tool/DeleteTool" method="post" style="display:inline;">
+                                    <input type="hidden" name="toolName" value="${tool.name}" />
+                                    <button type="submit" class="btn btn-danger btn-sm"
+                                            onclick="return confirm('Are you sure you want to delete ${tool.name}?');">
+                                        Delete
+                                    </button>
+                                </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        toolsContainer.innerHTML = html;
+
+        if (@User.Identity.IsAuthenticated.ToString().ToLower()) {
+            const hearts = document.querySelectorAll('.bi-heart');
+            hearts.forEach(heart => {
+                const toolId = heart.getAttribute('data-tool-id');
+                checkLikeStatus(toolId, heart);
+            });
+        }
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+</script>
+
 @if (User.Identity.IsAuthenticated)
 {
     <script>
@@ -185,109 +304,6 @@
                 console.error('Error toggling like:', error);
                 alert('An error occurred while toggling like.');
             }
-        }
-
-        document.getElementById('searchForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            searchTools();
-        });
-
-        document.getElementById('searchName').addEventListener('input', debounce(searchTools, 300));
-        document.getElementById('searchCategory').addEventListener('change', searchTools);
-        document.getElementById('searchPremium').addEventListener('change', searchTools);
-
-        async function searchTools() {
-            const searchName = document.getElementById('searchName').value;
-            const searchCategory = document.getElementById('searchCategory').value;
-            const searchPremium = document.getElementById('searchPremium').value;
-
-            try {
-                const response = await fetch('/Tool/SearchTools?' + new URLSearchParams({
-                    name: searchName,
-                    category: searchCategory,
-                    premium: searchPremium
-                }), {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Search request failed: ${response.status} - ${errorText}`);
-                }
-
-                const tools = await response.json();
-                updateToolsDisplay(tools);
-            } catch (error) {
-                console.error('Error searching tools:', error);
-                document.getElementById('toolsContainer').innerHTML =
-                    `<p class="text-danger">Error loading tools: ${error.message}. Please try again.</p>`;
-            }
-        }
-
-        function updateToolsDisplay(tools) {
-            const toolsList = document.getElementById('toolsList');
-            if (!toolsList) return;
-
-            if (tools.length === 0) {
-                toolsList.innerHTML = '<p>No tools found matching your criteria.</p>';
-                return;
-            }
-
-            let html = '';
-            tools.forEach(tool => {
-                const premiumClass = tool.isPremium ? 'premium-card' : '';
-                html += `
-                    <div class="col">
-                        <div class="card h-100 shadow-sm ${premiumClass}">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="card-title mb-0">${tool.name}</h5>
-                                    <i class="bi bi-heart" data-tool-id="${tool.id}"
-                                       onclick="toggleLike(${tool.id}, this)"></i>
-                                </div>
-                                <p class="card-text text-muted small mt-2">${tool.description || ''}</p>
-                                <p class="card-text text-muted small">
-                                    <strong>Category:</strong> ${tool.category || 'N/A'}<br />
-                                    <strong>Premium:</strong> ${tool.isPremium ? 'Yes' : 'No'}
-                                </p>
-                                <div class="d-flex justify-content-between">
-                                    <a href="/Tool/Detail?toolName=${tool.name}"
-                                       class="btn btn-primary btn-sm">View Details</a>
-                                    <form action="/Tool/DeleteTool" method="post" style="display:inline;">
-                                        <input type="hidden" name="toolName" value="${tool.name}" />
-                                        <button type="submit" class="btn btn-danger btn-sm"
-                                                onclick="return confirm('Are you sure you want to delete ${tool.name}?');">
-                                            Delete
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            toolsList.innerHTML = html;
-
-            const hearts = document.querySelectorAll('.bi-heart');
-            hearts.forEach(heart => {
-                const toolId = heart.getAttribute('data-tool-id');
-                checkLikeStatus(toolId, heart);
-            });
-        }
-
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
         }
     </script>
 }
