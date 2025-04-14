@@ -32,7 +32,8 @@
     @if (ViewBag.Result != null)
     {
         <div class="alert alert-success mt-3">
-            <strong>Result:</strong> @ViewBag.Result
+            <strong>Result:</strong>
+            <pre><code class="language-json">@ViewBag.Result</code></pre>
         </div>
     }
 
@@ -45,3 +46,14 @@
 
     <a asp-controller="Home" asp-action="Index" class="btn btn-secondary mt-3">Back to List</a>
 </div>
+
+@section Scripts {
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-json.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Prism.highlightAll();
+        });
+    </script>
+}
