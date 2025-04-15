@@ -22,8 +22,7 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var tools = await _toolRepository.GetAllAsync(); // Load tools from database
-        ViewData["Tools"] = tools;
+        var tools = await _toolRepository.GetAllAvailableAsync();
         return View(tools);
     }
 

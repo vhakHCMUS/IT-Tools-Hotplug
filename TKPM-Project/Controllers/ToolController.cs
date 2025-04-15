@@ -33,25 +33,23 @@ namespace TKPM_Project.Controllers
         {
             _logger.LogInformation($"{Request.Method} request to Detail with toolName: {toolName}");
 
-            var tool = _toolService.GetToolByName(toolName);
+            var tool = await _toolRepository.GetByNameAsync(toolName);
             if (tool == null)
             {
                 _logger.LogWarning($"Tool not found: {toolName}");
                 return NotFound();
             }
 
-            // Check if tool is a DB tool and if it's available
-            var dbTool = await _dbContext.Tools.FirstOrDefaultAsync(t => t.Name == toolName);
-            if (dbTool != null && !dbTool.IsAvailable)
+            if (!tool.IsAvailable)
             {
                 _logger.LogWarning($"Tool {toolName} is not available.");
-                return StatusCode(403, "This tool is currently unavailable.");
+                return NotFound();
             }
 
-            if (tool.IsPremium && !User.IsInRole("PremiumUser"))
+            if (tool.IsPremium && !User.IsInRole("Premium"))
             {
                 _logger.LogWarning($"Non-premium user attempted to access premium tool: {toolName}");
-                return StatusCode(403, "This tool requires a premium subscription.");
+                return RedirectToAction("PremiumRequest", "User");
             }
 
             // Execute tool if it's a POST request with inputs
@@ -195,15 +193,7 @@ namespace TKPM_Project.Controllers
         [HttpGet]
         public async Task<IActionResult> Tools()
         {
-            var tools = await _toolRepository.GetAllAsync();
-            if (tools == null || !tools.Any())
-            {
-                _logger.LogWarning("No tools retrieved for Tools view.");
-            }
-            else
-            {
-                _logger.LogInformation($"Retrieved {tools.Count()} tools for Tools view.");
-            }
+            var tools = await _toolRepository.GetAllAvailableAsync();
             return View(tools);
         }
 
@@ -212,32 +202,29 @@ namespace TKPM_Project.Controllers
         {
             try
             {
-                _logger.LogInformation($"SearchTools called with name: {name}, category: {category}, premium: {premium}");
-                
-                if (_dbContext == null || _dbContext.Tools == null)
-                {
-                    _logger.LogError("Database context or Tools DbSet is null");
-                    return StatusCode(500, "Database configuration error");
-                }
-
                 var toolsQuery = _dbContext.Tools.AsQueryable();
+
+                // Always filter by available tools
+                toolsQuery = toolsQuery.Where(t => t.IsAvailable);
 
                 if (!string.IsNullOrEmpty(name))
                 {
-                    toolsQuery = toolsQuery.Where(t => t.Name != null && t.Name.ToLower().Contains(name.ToLower()));
+                    toolsQuery = toolsQuery.Where(t => t.Name.Contains(name));
                 }
 
                 if (!string.IsNullOrEmpty(category))
                 {
-                    toolsQuery = toolsQuery.Where(t => t.Category != null && t.Category == category);
+                    toolsQuery = toolsQuery.Where(t => t.Category == category);
                 }
 
                 // Check if user is authenticated before applying premium filter
-                // Anonymous users should only see non-premium tools
                 if (!User.Identity.IsAuthenticated)
                 {
                     toolsQuery = toolsQuery.Where(t => !t.IsPremium);
-                    _logger.LogInformation("User not authenticated, filtering out premium tools");
+                }
+                else if (!User.IsInRole("Premium"))
+                {
+                    toolsQuery = toolsQuery.Where(t => !t.IsPremium);
                 }
                 else if (!string.IsNullOrEmpty(premium) && bool.TryParse(premium, out bool isPremium))
                 {
@@ -255,7 +242,6 @@ namespace TKPM_Project.Controllers
                     })
                     .ToListAsync();
 
-                _logger.LogInformation($"Search returned {tools.Count} tools for name: {name ?? "none"}, category: {category ?? "none"}, premium: {premium ?? "none"}");
                 return Json(tools);
             }
             catch (Exception ex)
