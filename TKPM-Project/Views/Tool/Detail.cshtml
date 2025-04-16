@@ -29,15 +29,22 @@
         </form>
     }
 
-    @if (ViewBag.Result != null)
+    @if (Model.Category != "Productivity" && ViewBag.Result != null)
     {
         <div class="alert alert-success mt-3">
             <strong>Result:</strong>
-            <pre><code class="language-json">@ViewBag.Result</code></pre>
+            @if (ViewBag.Result.ToString().Trim().StartsWith("<") && ViewBag.Result.ToString().Trim().EndsWith(">"))
+            {
+                @Html.Raw(ViewBag.Result)
+            }
+            else
+            {
+                <pre><code class="language-json">@ViewBag.Result</code></pre>
+            }
         </div>
     }
 
-    @if (ViewBag.Error != null)
+    @if (Model.Category != "Productivity" && ViewBag.Error != null)
     {
         <div class="alert alert-danger mt-3">
             <strong>Error:</strong> @ViewBag.Error
