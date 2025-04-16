@@ -198,7 +198,7 @@ namespace TKPM_Project.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> SearchTools(string name, string category, string premium)
+        public async Task<IActionResult> SearchTools(string name, string category, string premium, string sortBy)
         {
             try
             {
@@ -229,6 +229,26 @@ namespace TKPM_Project.Controllers
                 else if (!string.IsNullOrEmpty(premium) && bool.TryParse(premium, out bool isPremium))
                 {
                     toolsQuery = toolsQuery.Where(t => t.IsPremium == isPremium);
+                }
+
+                // Apply sorting
+                switch (sortBy)
+                {
+                    case "name_asc":
+                        toolsQuery = toolsQuery.OrderBy(t => t.Name);
+                        break;
+                    case "name_desc":
+                        toolsQuery = toolsQuery.OrderByDescending(t => t.Name);
+                        break;
+                    case "date_asc":
+                        toolsQuery = toolsQuery.OrderBy(t => t.CreatedAt);
+                        break;
+                    case "date_desc":
+                        toolsQuery = toolsQuery.OrderByDescending(t => t.CreatedAt);
+                        break;
+                    default:
+                        toolsQuery = toolsQuery.OrderBy(t => t.Name); // Default sort by name ascending
+                        break;
                 }
 
                 var tools = await toolsQuery

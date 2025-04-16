@@ -200,10 +200,35 @@
                 </span>
             </div>
         </div>
-        <div class="card-body p-0">
-            @if (Model.Any())
-            {
-                <div class="table-responsive">
+        <div class="card-body">
+            <!-- Search and Filter Controls -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search users...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select id="roleFilter" class="form-select">
+                        <option value="">All Roles</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Premium">Premium</option>
+                        <option value="User">User</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="sortBy" class="form-select">
+                        <option value="name_asc">Name (A-Z)</option>
+                        <option value="name_desc">Name (Z-A)</option>
+                        <option value="email_asc">Email (A-Z)</option>
+                        <option value="email_desc">Email (Z-A)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-responsive">
+                @if (Model.Any())
+                {
                     <table class="table table-hover user-table mb-0">
                         <thead>
                             <tr>
@@ -289,18 +314,18 @@
                             }
                         </tbody>
                     </table>
-                </div>
-            }
-            else
-            {
-                <div class="p-5 text-center">
-                    <div class="mb-3">
-                        <i class="bi bi-exclamation-circle" style="font-size: 3rem; color: var(--accent-rose);"></i>
+                }
+                else
+                {
+                    <div class="p-5 text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-exclamation-circle" style="font-size: 3rem; color: var(--accent-rose);"></i>
+                        </div>
+                        <h4>No Users Found</h4>
+                        <p class="text-muted">There are no users available in the system.</p>
                     </div>
-                    <h4>No Users Found</h4>
-                    <p class="text-muted">There are no users available in the system.</p>
-                </div>
-            }
+                }
+            </div>
         </div>
     </div>
 </div>
@@ -341,5 +366,67 @@
             var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
             deleteModal.show();
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const roleFilter = document.getElementById('roleFilter');
+            const sortBy = document.getElementById('sortBy');
+            const userTable = document.querySelector('.user-table tbody');
+            const userRows = Array.from(userTable.querySelectorAll('tr'));
+            const userCount = document.querySelector('.user-count');
+
+            function filterAndSortUsers() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const roleValue = roleFilter.value;
+                const sortValue = sortBy.value;
+
+                let filteredRows = userRows.filter(row => {
+                    const userName = row.querySelector('td:first-child').textContent.toLowerCase();
+                    const userEmail = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                    const userRoles = row.querySelector('td:nth-child(3)').textContent;
+
+                    const matchesSearch = userName.includes(searchTerm) || userEmail.includes(searchTerm);
+                    const matchesRole = !roleValue || userRoles.includes(roleValue);
+
+                    return matchesSearch && matchesRole;
+                });
+
+                // Sort the filtered rows
+                filteredRows.sort((a, b) => {
+                    const aName = a.querySelector('td:first-child').textContent;
+                    const bName = b.querySelector('td:first-child').textContent;
+                    const aEmail = a.querySelector('td:nth-child(2)').textContent;
+                    const bEmail = b.querySelector('td:nth-child(2)').textContent;
+
+                    switch(sortValue) {
+                        case 'name_asc':
+                            return aName.localeCompare(bName);
+                        case 'name_desc':
+                            return bName.localeCompare(aName);
+                        case 'email_asc':
+                            return aEmail.localeCompare(bEmail);
+                        case 'email_desc':
+                            return bEmail.localeCompare(aEmail);
+                        default:
+                            return 0;
+                    }
+                });
+
+                // Update the table
+                userTable.innerHTML = '';
+                filteredRows.forEach(row => userTable.appendChild(row));
+
+                // Update the user count
+                userCount.textContent = filteredRows.length;
+            }
+
+            // Add event listeners
+            searchInput.addEventListener('input', filterAndSortUsers);
+            roleFilter.addEventListener('change', filterAndSortUsers);
+            sortBy.addEventListener('change', filterAndSortUsers);
+
+            // Initial filter and sort
+            filterAndSortUsers();
+        });
     </script>
 }

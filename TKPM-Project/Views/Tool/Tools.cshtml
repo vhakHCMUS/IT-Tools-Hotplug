@@ -75,21 +75,27 @@
             <input type="text" class="form-control w-25" id="searchName" placeholder="Search by name...">
             <select class="form-select w-25" id="searchCategory">
                 <option value="">All Categories</option>
-                <option value="Text Tools">Text Tools</option>
+                <option value="API Testing">API Testing</option>
                 <option value="Data Formatter">Data Formatter</option>
-                <option value="Web Dev Tools">Web Dev Tools</option>
-                <option value="Date & Time Tools">Date & Time Tools</option>
-                <option value="Learn to Code">Learn to Code</option>
-                <option value="Markdown Tools">Markdown Tools</option>
-                <option value="API Tester">API Tester</option>
-                <option value="Git & Team Tools">Git & Team Tools</option>
-                <option value="Math">Math</option>
+                <option value="DateTime">DateTime</option>
                 <option value="Encryption">Encryption</option>
+                <option value="Math">Math</option>
+                <option value="Productivity">Productivity</option>
+                <option value="Programming">Programming</option>
+                <option value="Text Processing">Text Processing</option>
+                <option value="Utilities">Utilities</option>
+                <option value="Git helper">Git helper</option>
             </select>
             <select class="form-select w-25" id="searchPremium">
                 <option value="">All</option>
                 <option value="true">Premium Only</option>
                 <option value="false">Free Only</option>
+            </select>
+            <select class="form-select w-25" id="sortBy">
+                <option value="name_asc">Name (A-Z)</option>
+                <option value="name_desc">Name (Z-A)</option>
+                <option value="date_asc">Date (Oldest)</option>
+                <option value="date_desc">Date (Newest)</option>
             </select>
             <button type="submit" class="btn btn-primary">Search</button>
         </form>
@@ -122,10 +128,6 @@
                                 </p>
                                 <div class="d-flex justify-content-between">
                                     <a asp-controller="Tool" asp-action="Detail" asp-route-toolName="@tool.Name" class="btn btn-primary btn-sm">View Details</a>
-                                    <form asp-action="DeleteTool" method="post" style="display:inline;">
-                                        <input type="hidden" name="toolName" value="@tool.Name" />
-                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete @tool.Name?');">Delete</button>
-                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -150,17 +152,20 @@
     document.getElementById('searchName').addEventListener('input', debounce(searchTools, 300));
     document.getElementById('searchCategory').addEventListener('change', searchTools);
     document.getElementById('searchPremium').addEventListener('change', searchTools);
+    document.getElementById('sortBy').addEventListener('change', searchTools);
 
     async function searchTools() {
         const searchName = document.getElementById('searchName').value;
         const searchCategory = document.getElementById('searchCategory').value;
         const searchPremium = document.getElementById('searchPremium').value;
+        const sortBy = document.getElementById('sortBy').value;
 
         try {
             const response = await fetch('/Tool/SearchTools?' + new URLSearchParams({
                 name: searchName,
                 category: searchCategory,
-                premium: searchPremium
+                premium: searchPremium,
+                sortBy: sortBy
             }), {
                 method: 'GET',
                 headers: {
@@ -218,16 +223,6 @@
                             <div class="d-flex justify-content-between">
                                 <a href="/Tool/Detail?toolName=${tool.name}"
                                    class="btn btn-primary btn-sm">View Details</a>
-                                @if (User.IsInRole("Admin"))
-                                {
-                                <form action="/Tool/DeleteTool" method="post" style="display:inline;">
-                                    <input type="hidden" name="toolName" value="${tool.name}" />
-                                    <button type="submit" class="btn btn-danger btn-sm"
-                                            onclick="return confirm('Are you sure you want to delete ${tool.name}?');">
-                                        Delete
-                                    </button>
-                                </form>
-                                }
                             </div>
                         </div>
                     </div>
