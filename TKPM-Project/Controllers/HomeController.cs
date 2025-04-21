@@ -50,7 +50,7 @@ public class HomeController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> DeleteTool(string toolName) // Keep toolName for DLL logic
+    public async Task<IActionResult> DeleteTool(string toolName)
     {
         try
         {
@@ -68,17 +68,6 @@ public class HomeController : Controller
             GC.WaitForPendingFinalizers();
             _logger.LogInformation("Garbage collection completed.");
 
-            var dllFileName = _toolService.GetDllFileName(toolName);
-            if (!string.IsNullOrEmpty(dllFileName))
-            {
-                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Plugins", dllFileName);
-                if (System.IO.File.Exists(filePath))
-                {
-                    System.IO.File.Delete(filePath);
-                    _logger.LogInformation($"Successfully deleted .dll file for tool {toolName} at {filePath}");
-                }
-            }
-
             var tools = await _toolRepository.GetAllAsync(); // Load updated list from database
             ViewData["Tools"] = tools;
             return RedirectToAction("Index");
@@ -89,8 +78,6 @@ public class HomeController : Controller
             return RedirectToAction("Index");
         }
     }
-
-
 
     public async Task<IActionResult> Privacy()
     {

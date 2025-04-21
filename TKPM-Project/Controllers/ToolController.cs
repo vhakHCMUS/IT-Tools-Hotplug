@@ -146,16 +146,31 @@ namespace TKPM_Project.Controllers
         }
 
         [HttpPost]
-        public IActionResult DeleteTool(string toolName)
+        public async Task<IActionResult> DeleteTool(string toolName)
         {
-            var tool = _dbContext.Tools.FirstOrDefault(t => t.Name == toolName);
-            if (tool != null)
+            try
             {
-                _dbContext.Tools.Remove(tool);
-                _dbContext.SaveChanges();
-                _logger.LogInformation($"Deleted tool {toolName}");
+                var tool = _toolService.GetToolByName(toolName);
+                if (tool == null)
+                {
+                    _logger.LogWarning($"Tool {toolName} not found.");
+                    return RedirectToAction("ToolManager");
+                }
+
+                _toolService.UnloadTool(toolName);
+                _logger.LogInformation($"Unloaded tool {toolName} from memory.");
+
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                _logger.LogInformation("Garbage collection completed.");
+
+                return RedirectToAction("ToolManager");
             }
-            return RedirectToAction("ToolManager");
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting tool {toolName}");
+                return RedirectToAction("ToolManager");
+            }
         }
 
         [HttpPost]

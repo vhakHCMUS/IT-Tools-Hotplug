@@ -208,44 +208,64 @@ namespace TKPM_Project.Services
         {
             if (_tools.TryGetValue(toolName, out var toolInfo))
             {
-                // Dispose of the tool
-                toolInfo.Tool.Dispose();
-                _tools.Remove(toolName);
-
-                // Unload the assembly context
-                if (_contexts.TryGetValue(toolName, out var context))
-                {
-                    context.Unload();
-                    _contexts.Remove(toolName);
-                }
-
-                // Delete the DLL file
-                string dllPath = Path.Combine(_pluginPath, toolInfo.DllFileName);
                 try
                 {
+                    // Dispose of the tool
+                    toolInfo.Tool.Dispose();
+                    _tools.Remove(toolName);
+
+                    // Unload the assembly context
+                    if (_contexts.TryGetValue(toolName, out var context))
+                    {
+                        context.Unload();
+                        _contexts.Remove(toolName);
+                    }
+
+                    // Delete the DLL file with retry mechanism
+                    string dllPath = Path.Combine(_pluginPath, toolInfo.DllFileName);
                     if (File.Exists(dllPath))
                     {
-                        File.Delete(dllPath);
-                        _logger.LogInformation($"Deleted DLL file {dllPath}.");
+                        int maxRetries = 5;
+                        int retryDelay = 1000; // 1 second
+                        
+                        for (int i = 0; i < maxRetries; i++)
+                        {
+                            try
+                            {
+                                File.Delete(dllPath);
+                                _logger.LogInformation($"Successfully deleted DLL file {dllPath}.");
+                                break;
+                            }
+                            catch (IOException ex)
+                            {
+                                if (i == maxRetries - 1)
+                                {
+                                    _logger.LogError($"Failed to delete DLL file {dllPath} after {maxRetries} attempts: {ex.Message}");
+                                    throw;
+                                }
+                                await Task.Delay(retryDelay);
+                            }
+                        }
+                    }
+
+                    // Remove from the database
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        var toolRepository = scope.ServiceProvider.GetRequiredService<IToolRepository>();
+                        var toolToDelete = (await toolRepository.GetByKeywordAsync(toolName))
+                            .FirstOrDefault(t => t.Name == toolName);
+
+                        if (toolToDelete != null)
+                        {
+                            await toolRepository.DeleteAsync(toolToDelete.Id);
+                            _logger.LogInformation($"Deleted tool {toolName} from the database.");
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Failed to delete DLL file {dllPath}: {ex.Message}");
-                }
-
-                // Remove from the database
-                using (var scope = _serviceProvider.CreateScope())
-                {
-                    var toolRepository = scope.ServiceProvider.GetRequiredService<IToolRepository>();
-                    var toolToDelete = (await toolRepository.GetByKeywordAsync(toolName))
-                        .FirstOrDefault(t => t.Name == toolName);
-
-                    if (toolToDelete != null)
-                    {
-                        await toolRepository.DeleteAsync(toolToDelete.Id);
-                        _logger.LogInformation($"Deleted tool {toolName} from the database.");
-                    }
+                    _logger.LogError($"Error unloading tool {toolName}: {ex.Message}");
+                    throw;
                 }
             }
             else
