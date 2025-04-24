@@ -152,6 +152,34 @@ namespace TKPM_Project.Controllers
             return RedirectToAction(nameof(UserManager));
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<IActionResult> Delete(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return NotFound();
+            }
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return RedirectToAction(nameof(UserManager));
+            }
+
+            return RedirectToAction(nameof(UserManager));
+        }
+
         // User profile methods - accessible to authenticated users
         [Authorize]
         public async Task<IActionResult> Profile()
