@@ -2,20 +2,26 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using TKPM_Project.Models;
+using System.ComponentModel.DataAnnotations;
 
 public class ForgotPasswordModel
 {
+    [Required(ErrorMessage = "Username is required")]
     public string Username { get; set; }
 }
 
 public class ResetPasswordModel
 {
+    [Required(ErrorMessage = "Username is required")]
     public string Username { get; set; }
-    public string Token { get; set; }
-    public string NewPassword { get; set; }
-    public string Email { get; set; }
-}
 
+    [Required(ErrorMessage = "Token is required")]
+    public string Token { get; set; }
+
+    [Required(ErrorMessage = "New password is required")]
+    [MinLength(6, ErrorMessage = "Password must be at least 6 characters long")]
+    public string NewPassword { get; set; }
+}
 
 namespace TKPM_Project.Controllers
 {
@@ -62,20 +68,40 @@ namespace TKPM_Project.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
         {
+            Console.WriteLine($"Received reset password request. Username: {model?.Username}, Token length: {model?.Token?.Length}, NewPassword length: {model?.NewPassword?.Length}");
+
             if (string.IsNullOrEmpty(model.Username) || string.IsNullOrEmpty(model.Token) || string.IsNullOrEmpty(model.NewPassword))
+            {
+                Console.WriteLine("Missing required fields:");
+                Console.WriteLine($"Username is empty: {string.IsNullOrEmpty(model.Username)}");
+                Console.WriteLine($"Token is empty: {string.IsNullOrEmpty(model.Token)}");
+                Console.WriteLine($"NewPassword is empty: {string.IsNullOrEmpty(model.NewPassword)}");
                 return BadRequest(new { message = "Thiếu thông tin cần thiết" });
+            }
 
             var user = await _userManager.FindByNameAsync(model.Username);
             if (user == null)
+            {
+                Console.WriteLine($"User not found: {model.Username}");
                 return BadRequest(new { message = "Người dùng không tồn tại" });
+            }
 
+            Console.WriteLine($"Found user: {user.UserName}, attempting to reset password");
             var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
             if (result.Succeeded)
+            {
+                Console.WriteLine("Password reset successful");
+                await _signInManager.SignOutAsync();
                 return Ok(new { message = "Đặt lại mật khẩu thành công" });
+            }
 
+            Console.WriteLine("Password reset failed. Errors:");
+            foreach (var error in result.Errors)
+            {
+                Console.WriteLine($"- {error.Code}: {error.Description}");
+            }
             return BadRequest(new { message = "Không thể đặt lại mật khẩu", errors = result.Errors });
         }
-
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
@@ -125,8 +151,8 @@ namespace TKPM_Project.Controllers
             await _signInManager.SignOutAsync();
             return Ok(new { message = "Logged out" });
         }
-
     }
+
     public class LoginModel
     {
         public string Username { get; set; }
@@ -138,7 +164,4 @@ namespace TKPM_Project.Controllers
         public string Username { get; set; }
         public string Password { get; set; }
     }
-
-
-
 }
