@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TKPM_Project.Controllers;
 
 namespace TKPM_Project.Controllers
 {
@@ -20,9 +21,13 @@ namespace TKPM_Project.Controllers
 
         public IActionResult ResetPassword(string token, string username)
         {
-            ViewBag.Token = token;
-            ViewBag.Username = username;
-            return View();
+            var model = new ResetPasswordModel
+            {
+                Token = token,
+                Username = username,
+                Email = username // Since username is the email in this case
+            };
+            return View(model);
         }
     }
 }
