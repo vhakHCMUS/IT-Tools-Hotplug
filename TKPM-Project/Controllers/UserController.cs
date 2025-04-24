@@ -84,8 +84,16 @@ namespace TKPM_Project.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditUserViewModel model)
         {
+            Console.WriteLine($"[Edit POST] Starting edit for user {model.UserId}");
+            Console.WriteLine($"[Edit POST] Model state is valid: {ModelState.IsValid}");
+            
             if (!ModelState.IsValid)
             {
+                Console.WriteLine("[Edit POST] Model validation failed");
+                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    Console.WriteLine($"[Edit POST] Validation error: {error.ErrorMessage}");
+                }
                 model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
                 return View(model);
             }
@@ -93,8 +101,15 @@ namespace TKPM_Project.Controllers
             var user = await _userManager.FindByIdAsync(model.UserId);
             if (user == null)
             {
+                Console.WriteLine($"[Edit POST] User not found with ID: {model.UserId}");
                 return NotFound();
             }
+
+            Console.WriteLine($"[Edit POST] Updating user {user.UserName} with new data:");
+            Console.WriteLine($"[Edit POST] - New username: {model.UserName}");
+            Console.WriteLine($"[Edit POST] - New email: {model.Email}");
+            Console.WriteLine($"[Edit POST] - New full name: {model.FullName}");
+            Console.WriteLine($"[Edit POST] - Selected roles: {string.Join(", ", model.SelectedRoles ?? new string[0])}");
 
             // Cập nhật thông tin người dùng
             user.UserName = model.UserName;
@@ -104,8 +119,10 @@ namespace TKPM_Project.Controllers
             var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
             {
+                Console.WriteLine("[Edit POST] Failed to update user");
                 foreach (var error in updateResult.Errors)
                 {
+                    Console.WriteLine($"[Edit POST] Update error: {error.Description}");
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
                 model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
@@ -114,6 +131,7 @@ namespace TKPM_Project.Controllers
 
             // Cập nhật vai trò
             var currentRoles = await _userManager.GetRolesAsync(user);
+            Console.WriteLine($"[Edit POST] Current roles: {string.Join(", ", currentRoles)}");
 
             // Handle null SelectedRoles (no checkboxes selected)
             var selectedRoles = model.SelectedRoles ?? new string[0];
@@ -121,13 +139,18 @@ namespace TKPM_Project.Controllers
             var rolesToAdd = selectedRoles.Where(r => !currentRoles.Contains(r)).ToList();
             var rolesToRemove = currentRoles.Where(r => !selectedRoles.Contains(r)).ToList();
 
+            Console.WriteLine($"[Edit POST] Roles to add: {string.Join(", ", rolesToAdd)}");
+            Console.WriteLine($"[Edit POST] Roles to remove: {string.Join(", ", rolesToRemove)}");
+
             if (rolesToAdd.Any())
             {
                 var addResult = await _userManager.AddToRolesAsync(user, rolesToAdd);
                 if (!addResult.Succeeded)
                 {
+                    Console.WriteLine("[Edit POST] Failed to add roles");
                     foreach (var error in addResult.Errors)
                     {
+                        Console.WriteLine($"[Edit POST] Add role error: {error.Description}");
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
                     model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
@@ -140,8 +163,10 @@ namespace TKPM_Project.Controllers
                 var removeResult = await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
                 if (!removeResult.Succeeded)
                 {
+                    Console.WriteLine("[Edit POST] Failed to remove roles");
                     foreach (var error in removeResult.Errors)
                     {
+                        Console.WriteLine($"[Edit POST] Remove role error: {error.Description}");
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
                     model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
@@ -149,6 +174,7 @@ namespace TKPM_Project.Controllers
                 }
             }
 
+            Console.WriteLine("[Edit POST] Successfully updated user");
             return RedirectToAction(nameof(UserManager));
         }
 
