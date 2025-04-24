@@ -87,6 +87,12 @@ namespace TKPM_Project.Controllers
             Console.WriteLine($"[Edit POST] Starting edit for user {model.UserId}");
             Console.WriteLine($"[Edit POST] Model state is valid: {ModelState.IsValid}");
             
+            // Get all roles if not provided in the model
+            if (model.AllRoles == null)
+            {
+                model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
+            }
+            
             if (!ModelState.IsValid)
             {
                 Console.WriteLine("[Edit POST] Model validation failed");
@@ -94,7 +100,6 @@ namespace TKPM_Project.Controllers
                 {
                     Console.WriteLine($"[Edit POST] Validation error: {error.ErrorMessage}");
                 }
-                model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
                 return View(model);
             }
 
@@ -125,7 +130,6 @@ namespace TKPM_Project.Controllers
                     Console.WriteLine($"[Edit POST] Update error: {error.Description}");
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
-                model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
                 return View(model);
             }
 
@@ -153,7 +157,6 @@ namespace TKPM_Project.Controllers
                         Console.WriteLine($"[Edit POST] Add role error: {error.Description}");
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
-                    model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
                     return View(model);
                 }
             }
@@ -169,7 +172,6 @@ namespace TKPM_Project.Controllers
                         Console.WriteLine($"[Edit POST] Remove role error: {error.Description}");
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
-                    model.AllRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
                     return View(model);
                 }
             }

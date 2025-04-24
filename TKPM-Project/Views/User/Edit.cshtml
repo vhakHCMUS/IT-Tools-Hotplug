@@ -8,6 +8,13 @@
     <form asp-controller="User" asp-action="Edit" method="post">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="UserId" />
+        @if (Model.AllRoles != null)
+        {
+            @for (int i = 0; i < Model.AllRoles.Count; i++)
+            {
+                <input type="hidden" name="AllRoles[@i]" value="@Model.AllRoles[i]" />
+            }
+        }
 
         <div class="form-group">
             <label asp-for="UserName">Username</label>
