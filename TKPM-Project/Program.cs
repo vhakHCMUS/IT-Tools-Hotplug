@@ -50,6 +50,7 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped<IToolRepository, ToolRepository>();
 builder.Services.AddScoped<IUserLikedToolRepository, UserLikedToolRepository>();
 builder.Services.AddScoped<IUserPremiumRepository, UserPremiumRepository>();
+builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 var app = builder.Build();
 

@@ -3,20 +3,79 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using TKPM_Project.Models;
 
+public class ForgotPasswordModel
+{
+    public string Username { get; set; }
+}
+
+public class ResetPasswordModel
+{
+    public string Username { get; set; }
+    public string Token { get; set; }
+    public string NewPassword { get; set; }
+}
+
+
 namespace TKPM_Project.Controllers
 {
     [Route("api/auth")]
     [ApiController]
     public class AuthController : ControllerBase
     {
+        private readonly IEmailSender _emailSender;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-
-        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IEmailSender emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _emailSender = emailSender;
         }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordModel model)
+        {
+            if (string.IsNullOrWhiteSpace(model.Username))
+                return BadRequest(new { message = "Vui lòng nhập username" });
+
+            var user = await _userManager.FindByNameAsync(model.Username);
+            if (user == null)
+                return BadRequest(new { message = "Người dùng không tồn tại" });
+
+            // Ensure email is properly formatted
+            string email = user.Email;
+            if (!email.Contains("@"))
+            {
+                email = $"{email}@gmail.com";
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var resetUrl = $"http://localhost:5017/account/resetpassword?token={Uri.EscapeDataString(token)}&username={Uri.EscapeDataString(user.UserName)}";
+
+            await _emailSender.SendEmailAsync(email, "Đặt lại mật khẩu",
+                $"<p>Bạn đã yêu cầu đặt lại mật khẩu.</p><p><a href='{resetUrl}'>Bấm vào đây để đặt lại mật khẩu</a></p>");
+
+            return Ok(new { message = "Email đặt lại mật khẩu đã được gửi" });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
+        {
+            if (string.IsNullOrEmpty(model.Username) || string.IsNullOrEmpty(model.Token) || string.IsNullOrEmpty(model.NewPassword))
+                return BadRequest(new { message = "Thiếu thông tin cần thiết" });
+
+            var user = await _userManager.FindByNameAsync(model.Username);
+            if (user == null)
+                return BadRequest(new { message = "Người dùng không tồn tại" });
+
+            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+            if (result.Succeeded)
+                return Ok(new { message = "Đặt lại mật khẩu thành công" });
+
+            return BadRequest(new { message = "Không thể đặt lại mật khẩu", errors = result.Errors });
+        }
+
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
@@ -31,7 +90,23 @@ namespace TKPM_Project.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
-            var user = new ApplicationUser { UserName = model.Username };
+            // Check if username is already an email
+            string email;
+            if (model.Username.Contains("@") && model.Username.Contains("."))
+            {
+                email = model.Username;
+            }
+            else
+            {
+                email = $"{model.Username}@gmail.com";
+            }
+
+            var user = new ApplicationUser 
+            { 
+                UserName = model.Username,
+                Email = email
+            };
+            
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)

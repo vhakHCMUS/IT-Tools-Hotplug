@@ -13,5 +13,16 @@ namespace TKPM_Project.Controllers
         {
             return View();
         }
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        public IActionResult ResetPassword(string token, string username)
+        {
+            ViewBag.Token = token;
+            ViewBag.Username = username;
+            return View();
+        }
     }
 }
