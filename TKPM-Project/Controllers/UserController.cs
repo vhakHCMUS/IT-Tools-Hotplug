@@ -138,9 +138,9 @@ namespace TKPM_Project.Controllers
             Console.WriteLine($"[Edit POST] Current roles: {string.Join(", ", currentRoles)}");
 
             // Handle null SelectedRoles (no checkboxes selected)
-            var selectedRoles = model.SelectedRoles ?? new string[0];
+            var selectedRoles = model.SelectedRoles?.Where(r => !string.IsNullOrEmpty(r)).ToArray() ?? Array.Empty<string>();
 
-            var rolesToAdd = selectedRoles.Where(r => !currentRoles.Contains(r)).ToList();
+            var rolesToAdd = selectedRoles.Where(r => !string.IsNullOrEmpty(r) && !currentRoles.Contains(r)).ToList();
             var rolesToRemove = currentRoles.Where(r => !selectedRoles.Contains(r)).ToList();
 
             Console.WriteLine($"[Edit POST] Roles to add: {string.Join(", ", rolesToAdd)}");

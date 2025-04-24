@@ -36,8 +36,6 @@
 
         <div class="form-group">
             <label>Roles</label>
-            <!-- Hidden field to ensure SelectedRoles is always sent, even when empty -->
-            <input type="hidden" name="SelectedRoles" value="" />
             <div>
                 @if (Model.AllRoles != null)
                 {
@@ -47,8 +45,9 @@
                             <input type="checkbox"
                                    name="SelectedRoles"
                                    value="@Model.AllRoles[i]"
-                            @(Model.Roles.Contains(Model.AllRoles[i]) ? "checked" : "")
-                                   class="form-check-input" id="role_@i" />
+                                   @(Model.Roles.Contains(Model.AllRoles[i]) ? "checked" : "")
+                                   class="form-check-input" 
+                                   id="role_@i" />
                             <label class="form-check-label" for="role_@i">@Model.AllRoles[i]</label>
                         </div>
                     }
